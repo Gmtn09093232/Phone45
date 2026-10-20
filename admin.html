@@ -23,8 +23,7 @@
   th { color:#9aa; font-weight:600; }
   .empty { color:#888; font-style:italic; }
   .draw { display:flex; gap:12px; margin:15px 0; }
-  .ball { width:60px; height:60px; border-radius:50%; background: var(--accent); color:#000;
-          display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:bold; }
+  .ball { width:60px; height:60px; border-radius:50%; background: var(--accent); color:#000; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:bold; }
   .btn-sm { padding:6px 12px; font-size:13px; }
   .hidden { display:none; }
 </style>
@@ -42,13 +41,10 @@
 </div>
 
 <div id="adminPanel" class="hidden">
-
   <div class="panel">
     <h2>Pending Transactions</h2>
     <table>
-      <thead>
-        <tr><th>Player</th><th>Phone</th><th>Type</th><th>Amount</th><th>Action</th></tr>
-      </thead>
+      <thead><tr><th>Player</th><th>Phone</th><th>Type</th><th>Amount</th><th>Action</th></tr></thead>
       <tbody id="txBody"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
     </table>
   </div>
@@ -66,33 +62,29 @@
     </div>
 
     <div id="drawResult" class="hidden">
-      <div class="draw">
-        <div class="ball" id="b1">–</div>
-        <div class="ball" id="b2">–</div>
-        <div class="ball" id="b3">–</div>
-      </div>
+      <div class="draw"><div class="ball" id="b1">–</div><div class="ball" id="b2">–</div><div class="ball" id="b3">–</div></div>
       <ul id="winnerList" style="padding-left:18px;"></ul>
     </div>
   </div>
 </div>
 
 <script>
-  const API = 'http://localhost:3000';
+  // ⚠️ CHANGE THIS TO YOUR DEPLOYED BACKEND URL
+  const LIVE_BACKEND_URL = 'https://YOUR-BACKEND-URL-HERE.com';
+
+  const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    ? 'http://localhost:3000' 
+    : LIVE_BACKEND_URL;
+
   let adminKey = localStorage.getItem('dotBingoAdminKey') || '';
   let timer = null;
-
   const $ = (id) => document.getElementById(id);
-  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c =>
-    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
   async function api(path, options = {}) {
     const res = await fetch(API + path, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        'x-admin-key': adminKey,
-        ...(options.headers || {})
-      }
+      headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey, ...(options.headers || {}) }
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
@@ -122,23 +114,8 @@
     try {
       const rows = await api('/api/admin/transactions');
       const body = $('txBody');
-
-      if (!rows.length) {
-        body.innerHTML = '<tr><td colspan="5" class="empty">No pending transactions.</td></tr>';
-        return;
-      }
-
-      body.innerHTML = rows.map(t => `
-        <tr>
-          <td>${esc(t.users?.name)}</td>
-          <td>${esc(t.users?.phone)}</td>
-          <td>${esc(t.type)}</td>
-          <td>${Number(t.amount).toFixed(2)}</td>
-          <td>
-            <button class="btn-sm" onclick="resolve(${t.id},'approve')">Approve</button>
-            <button class="btn-sm danger" onclick="resolve(${t.id},'reject')">Reject</button>
-          </td>
-        </tr>`).join('');
+      if (!rows.length) return body.innerHTML = '<tr><td colspan="5" class="empty">No pending transactions.</td></tr>';
+      body.innerHTML = rows.map(t => `<tr><td>${esc(t.users?.name)}</td><td>${esc(t.users?.phone)}</td><td>${esc(t.type)}</td><td>${Number(t.amount).toFixed(2)}</td><td><button class="btn-sm" onclick="resolve(${t.id},'approve')">Approve</button> <button class="btn-sm danger" onclick="resolve(${t.id},'reject')">Reject</button></td></tr>`).join('');
     } catch (e) {
       $('txBody').innerHTML = `<tr><td colspan="5" class="empty">${esc(e.message)}</td></tr>`;
     }
@@ -147,37 +124,19 @@
   async function resolve(id, action) {
     if (!confirm(`${action} transaction #${id}?`)) return;
     try {
-      const data = await api(`/api/admin/transaction/${id}`, {
-        method: 'POST',
-        body: JSON.stringify({ action })
-      });
+      const data = await api(`/api/admin/transaction/${id}`, { method: 'POST', body: JSON.stringify({ action }) });
       alert(data.message);
       await refreshAll();
-    } catch (e) {
-      alert(e.message);
-    }
+    } catch (e) { alert(e.message); }
   }
 
   async function loadPlayers() {
     try {
       const { round, players } = await api('/api/admin/players');
       const body = $('playerBody');
-
-      if (!round) {
-        body.innerHTML = '<tr><td colspan="3" class="empty">No active round.</td></tr>';
-        return;
-      }
-      if (!players.length) {
-        body.innerHTML = '<tr><td colspan="3" class="empty">No players in this round yet.</td></tr>';
-        return;
-      }
-
-      body.innerHTML = players.map(p => `
-        <tr>
-          <td>${esc(p.card_number)}</td>
-          <td>${esc(p.users?.name)}</td>
-          <td>${esc(p.users?.phone)}</td>
-        </tr>`).join('');
+      if (!round) return body.innerHTML = '<tr><td colspan="3" class="empty">No active round.</td></tr>';
+      if (!players.length) return body.innerHTML = '<tr><td colspan="3" class="empty">No players in this round yet.</td></tr>';
+      body.innerHTML = players.map(p => `<tr><td>${esc(p.card_number)}</td><td>${esc(p.users?.name)}</td><td>${esc(p.users?.phone)}</td></tr>`).join('');
     } catch (e) {
       $('playerBody').innerHTML = `<tr><td colspan="3" class="empty">${esc(e.message)}</td></tr>`;
     }
@@ -187,21 +146,15 @@
     if (!confirm('Close the current round and draw 3 winners?')) return;
     try {
       const data = await api('/api/admin/draw', { method: 'POST' });
-
       $('drawResult').classList.remove('hidden');
       $('b1').textContent = data.draw_1;
       $('b2').textContent = data.draw_2;
       $('b3').textContent = data.draw_3;
-
       $('winnerList').innerHTML = data.winners.length
-        ? data.winners.map(w =>
-            `<li>Card ${esc(w.card_number)} — ${esc(w.name)} (${esc(w.phone)})</li>`).join('')
+        ? data.winners.map(w => `<li>Card ${esc(w.card_number)} — ${esc(w.name)} (${esc(w.phone)})</li>`).join('')
         : '<li>No winners this round.</li>';
-
       await refreshAll();
-    } catch (e) {
-      alert(e.message);
-    }
+    } catch (e) { alert(e.message); }
   }
 
   async function newRound() {
@@ -211,9 +164,7 @@
       alert(data.message);
       $('drawResult').classList.add('hidden');
       await refreshAll();
-    } catch (e) {
-      alert(e.message);
-    }
+    } catch (e) { alert(e.message); }
   }
 
   if (adminKey) unlock();
