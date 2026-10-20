@@ -1,4 +1,3 @@
-<!-- public/player.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -39,7 +38,6 @@
 </head>
 <body>
 
-<!-- Login -->
 <div class="panel" id="loginPanel">
   <h2>Player Login</h2>
   <input type="text" id="name" placeholder="Full Name" autocomplete="name">
@@ -47,7 +45,6 @@
   <button onclick="login()">Login / Register</button>
 </div>
 
-<!-- Game -->
 <div id="gamePanel" class="hidden">
 
   <div class="panel" id="depositPanel">
@@ -96,7 +93,6 @@
     return data;
   }
 
-  // ---------- Grid ----------
   const grid = $('numberGrid');
   for (let i = 1; i <= 100; i++) {
     const cell = document.createElement('div');
@@ -153,7 +149,6 @@
       : 'No active round yet — buying a card will open one.';
   }
 
-  // ---------- Auth ----------
   async function login() {
     const name = $('name').value.trim();
     const phone = $('phone').value.trim();
@@ -180,7 +175,6 @@
     pollTimer = setInterval(refresh, 5000);
   }
 
-  // ---------- Data refresh ----------
   async function refresh() {
     if (!currentUser) return;
     try {
@@ -197,7 +191,6 @@
     }
   }
 
-  // ---------- Money ----------
   async function transaction(type) {
     const amount = Number($('amount').value);
     if (!Number.isFinite(amount) || amount <= 0) return alert('Enter a valid amount.');
@@ -216,7 +209,6 @@
     }
   }
 
-  // ---------- Play ----------
   async function play() {
     if (!selectedNum) return alert('Select a card first.');
     if (Number(currentUser.balance) < CARD_PRICE) return alert('Insufficient balance.');
@@ -242,7 +234,6 @@
     }
   }
 
-  // ---------- History ----------
   const esc = (s) => String(s).replace(/[&<>"']/g, c =>
     ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
