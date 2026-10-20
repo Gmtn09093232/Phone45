@@ -7,11 +7,18 @@
 <style>
   :root { --bg:#1e1e2f; --panel:#2a2a40; --cell:#3b3b58; --accent:#FF9800; --green:#4CAF50; --blue:#2196F3; --red:#f44336; }
   * { box-sizing: border-box; }
-  body { font-family: system-ui, sans-serif; background: var(--bg); color:#fff; padding:20px; text-align:center; margin:0; }
-  .panel { background: var(--panel); padding:20px; border-radius:10px; max-width:520px; margin:0 auto 20px; transition: all .3s ease; }
-  h2 { margin-top:0; font-size: 20px; }
-  h3 { margin: 10px 0 5px; font-size: 15px; color: #aaa; }
-  input, select, button { padding:10px; margin:5px 0; border-radius:5px; border:none; width:100%; font-size:15px; }
+  body { font-family: system-ui, sans-serif; background: var(--bg); color:#fff; padding:15px; text-align:center; margin:0; }
+  
+  /* Collapsible Accordion Styles */
+  details { background: var(--panel); border-radius: 10px; max-width: 520px; margin: 0 auto 15px; overflow: hidden; transition: all 0.3s ease; }
+  summary { padding: 15px; font-weight: bold; font-size: 18px; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: '▼'; font-size: 12px; color: #aaa; transition: transform 0.3s; }
+  details[open] summary::after { transform: rotate(-180deg); }
+  .content { padding: 0 20px 20px; text-align: center; border-top: 1px solid #3b3b58; padding-top: 15px; }
+  
+  /* Inputs and Buttons */
+  input, select, button { padding:12px; margin:6px 0; border-radius:6px; border:none; width:100%; font-size:15px; }
   input, select { background:#1b1b2b; color:#fff; border: 1px solid #3b3b58; }
   button { background: var(--green); color:#fff; cursor:pointer; font-weight:bold; }
   button:disabled { background: gray; cursor: not-allowed; }
@@ -19,93 +26,116 @@
   .btn-red { background: var(--red); }
   .row { display:flex; gap:10px; }
   .row > button { flex:1; }
-  .grid { display:grid; grid-template-columns: repeat(10, 1fr); gap:5px; margin-top:15px; }
-  .num { background: var(--cell); padding:10px 0; cursor:pointer; border-radius:5px; font-size:14px; user-select:none; }
+  
+  /* Game Grid */
+  .grid { display:grid; grid-template-columns: repeat(10, 1fr); gap:4px; margin-top:15px; }
+  .num { background: var(--cell); padding:10px 0; cursor:pointer; border-radius:4px; font-size:13px; user-select:none; }
   .num.selected { background: var(--accent); color:#000; font-weight:bold; }
   .num.taken { background:#232338; color:#555; cursor:not-allowed; text-decoration: line-through; }
-  #balance { color: var(--green); font-size:24px; font-weight:bold; }
+  
+  /* Specific UI */
+  #balance { color: var(--green); font-size:28px; font-weight:bold; margin: 5px 0; }
   .hidden { display:none; }
-  .highlight-deposit { border: 2px solid var(--accent); box-shadow: 0 0 15px rgba(255,152,0,.5); background:#35354d; }
-  ul.history { list-style:none; padding:0; margin:0; text-align:left; font-size:14px; }
-  ul.history li { padding:6px 0; border-bottom:1px solid #3a3a55; display:flex; justify-content:space-between; gap:8px; }
-  .tag { font-size:12px; padding:2px 6px; border-radius:4px; background:#3b3b58; }
+  .highlight-deposit { border: 2px solid var(--accent); box-shadow: 0 0 15px rgba(255,152,0,.5); }
+  .info-box { background: #1b1b2b; padding: 10px; border-radius: 5px; border-left: 3px solid var(--accent); text-align: left; margin: 10px 0; font-size: 14px; }
+  
+  /* History & Winners List */
+  ul.list { list-style:none; padding:0; margin:0; text-align:left; font-size:14px; }
+  ul.list li { padding:8px 0; border-bottom:1px solid #3a3a55; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .tag { font-size:11px; padding:3px 6px; border-radius:4px; background:#3b3b58; white-space:nowrap; }
   .tag.approved { background:#2e7d32; }
   .tag.rejected { background:#c62828; }
   .tag.pending  { background:#6d4c41; }
-  .info-box { background: #1b1b2b; padding: 10px; border-radius: 5px; border-left: 3px solid var(--accent); text-align: left; margin: 10px 0; font-size: 14px; }
+  .win-balls { display: flex; justify-content: center; gap: 10px; margin: 15px 0; }
+  .ball { width: 40px; height: 40px; background: var(--accent); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; }
 </style>
 </head>
 <body>
 
-<div class="panel" id="loginPanel">
+<!-- LOGIN -->
+<div class="panel" id="loginPanel" style="background:var(--panel); padding:20px; border-radius:10px; max-width:520px; margin:0 auto 20px;">
   <h2>Player Login</h2>
   <input type="text" id="name" placeholder="Full Name" autocomplete="name">
   <input type="tel" id="phone" placeholder="Phone Number (09... or +251...)" autocomplete="tel">
   <button onclick="login()">Login / Register</button>
 </div>
 
+<!-- MAIN GAME AREA -->
 <div id="gamePanel" class="hidden">
   
-  <!-- Balance Panel -->
-  <div class="panel" id="depositPanel">
-    <h2>Welcome, <span id="userName"></span></h2>
-    <p>Balance: <span id="balance">0.00</span> Birr</p>
+  <!-- 1. BALANCE -->
+  <div style="max-width:520px; margin: 0 auto 15px; background: var(--panel); border-radius: 10px; padding: 15px;">
+    <h2 style="margin:0; font-size:16px; color:#aaa;">Welcome, <span id="userName" style="color:#fff;"></span></h2>
+    <div>Balance: <span id="balance">0.00</span> Birr</div>
   </div>
 
-  <!-- Deposit Section -->
-  <div class="panel">
-    <h2>💰 Request Deposit</h2>
-    <h3>1. Send money to our account:</h3>
-    <div class="info-box">
-      <b>Telebirr:</b> 0912345678 (Dot Bingo)<br>
-      <b>CBE:</b> 1000123456789 (Dot Bingo)
+  <!-- 2. DEPOSIT (Collapsible) -->
+  <details id="depositAcc">
+    <summary style="color: var(--green)">💰 Request Deposit</summary>
+    <div class="content">
+      <div class="info-box">
+        <b>Telebirr:</b> 0912345678 (Dot Bingo)<br>
+        <b>CBE:</b> 1000123456789 (Dot Bingo)
+      </div>
+      <input type="number" id="depAmount" placeholder="Amount (Birr)" min="1">
+      <select id="depMethod">
+        <option value="telebirr">Telebirr</option>
+        <option value="cbe">CBE</option>
+      </select>
+      <input type="text" id="depProof" placeholder="Transaction ID / SMS Reference">
+      <button class="btn-blue" onclick="handleDeposit()">Submit Deposit</button>
     </div>
-    
-    <h3>2. Submit your details:</h3>
-    <input type="number" id="depAmount" placeholder="Amount (Birr)" min="1">
-    <select id="depMethod">
-      <option value="telebirr">Telebirr</option>
-      <option value="cbe">CBE (Commercial Bank of Ethiopia)</option>
-    </select>
-    <input type="text" id="depProof" placeholder="Transaction ID / SMS Reference">
-    <button class="btn-blue" onclick="handleDeposit()">Submit Deposit Request</button>
-  </div>
+  </details>
 
-  <!-- Withdraw Section -->
-  <div class="panel">
-    <h2>💸 Request Withdraw</h2>
-    <input type="number" id="withAmount" placeholder="Amount (Birr)" min="1">
-    <select id="withMethod">
-      <option value="telebirr">Telebirr</option>
-      <option value="cbe">CBE (Commercial Bank of Ethiopia)</option>
-    </select>
-    <input type="text" id="withAccount" placeholder="Account Number / Phone Number">
-    <button class="btn-red" onclick="handleWithdraw()">Submit Withdraw Request</button>
-  </div>
+  <!-- 3. WITHDRAW (Collapsible) -->
+  <details id="withdrawAcc">
+    <summary style="color: var(--red)">💸 Request Withdraw</summary>
+    <div class="content">
+      <input type="number" id="withAmount" placeholder="Amount (Birr)" min="1">
+      <select id="withMethod">
+        <option value="telebirr">Telebirr</option>
+        <option value="cbe">CBE</option>
+      </select>
+      <input type="text" id="withAccount" placeholder="Account Number / Phone Number">
+      <button class="btn-red" onclick="handleWithdraw()">Submit Withdraw</button>
+    </div>
+  </details>
 
-  <!-- Game Grid -->
-  <div class="panel">
-    <h2>🎲 Select Card (Cost: 100 Birr)</h2>
-    <p id="roundInfo" style="color:#aaa; font-size:14px;"></p>
-    <div class="grid" id="numberGrid"></div>
-    <p id="selectedInfo" style="color:var(--accent); font-weight:bold; min-height:20px;"></p>
-    <button id="playBtn" onclick="play()" disabled>Pay 100 Birr &amp; Play</button>
-  </div>
+  <!-- 4. PLAY GAME (Collapsible) -->
+  <details id="gameAcc" open>
+    <summary style="color: var(--accent)">🎲 Play Game (100 Birr)</summary>
+    <div class="content">
+      <p id="roundInfo" style="color:#aaa; font-size:14px; margin-top:0;"></p>
+      <div class="grid" id="numberGrid"></div>
+      <p id="selectedInfo" style="color:var(--accent); font-weight:bold; min-height:20px;"></p>
+      <button id="playBtn" onclick="play()" disabled>Pay 100 Birr &amp; Play</button>
+    </div>
+  </details>
 
-  <!-- History -->
-  <div class="panel">
-    <h2>Recent Activity</h2>
-    <ul class="history" id="historyList"><li>No activity yet.</li></ul>
-  </div>
+  <!-- 5. WINNERS & RESULTS (Collapsible) -->
+  <details id="winnersAcc">
+    <summary style="color: #9C27B0">🏆 Winners &amp; Results</summary>
+    <div class="content" id="winnersList">
+      <p style="color:#aaa;">Loading results...</p>
+    </div>
+  </details>
+
+  <!-- 6. MY HISTORY (Collapsible) -->
+  <details>
+    <summary>📋 My Recent Activity</summary>
+    <div class="content">
+      <ul class="list" id="historyList"><li>No activity yet.</li></ul>
+    </div>
+  </details>
+
 </div>
 
 <script>
-  // ⚠️ CHANGE THIS TO YOUR DEPLOYED BACKEND URL (e.g., https://my-backend.onrender.com)
+  // ⚠️ UPDATE THIS TO YOUR BACKEND URL
   const LIVE_BACKEND_URL = 'https://phone45.vercel.app/'; 
   
   const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-    ? 'http://localhost:3000' 
-    : LIVE_BACKEND_URL;
+    ? 'http://localhost:3000' : LIVE_BACKEND_URL;
 
   const CARD_PRICE = 100;
   let currentUser = null;
@@ -125,7 +155,7 @@
     return data;
   }
 
-  // Game Grid Setup
+  // Build Grid
   const grid = $('numberGrid');
   for (let i = 1; i <= 100; i++) {
     const cell = document.createElement('div');
@@ -137,7 +167,7 @@
   }
 
   function selectNumber(n) {
-    if (takenNumbers.has(n)) return alert('That card is already taken in this round.');
+    if (takenNumbers.has(n)) return alert('That card is already taken.');
     if (!currentUser || Number(currentUser.balance) < CARD_PRICE) {
       alert(`Insufficient balance. You need at least ${CARD_PRICE} Birr.`);
       highlightDeposit();
@@ -147,15 +177,16 @@
     document.querySelectorAll('.num').forEach(el => {
       el.classList.toggle('selected', Number(el.dataset.num) === n);
     });
-    $('selectedInfo').textContent = `Selected card: ${n}`;
+    $('selectedInfo').textContent = `Selected: ${n}`;
     $('playBtn').disabled = false;
   }
 
   function highlightDeposit() {
-    const panel = $('depositPanel');
-    panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    panel.classList.add('highlight-deposit');
-    setTimeout(() => panel.classList.remove('highlight-deposit'), 3000);
+    const acc = $('depositAcc');
+    acc.open = true; // Open the accordion
+    acc.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    acc.classList.add('highlight-deposit');
+    setTimeout(() => acc.classList.remove('highlight-deposit'), 3000);
   }
 
   function renderRound(round, taken) {
@@ -171,8 +202,8 @@
       }
     });
     $('roundInfo').textContent = round
-      ? `Round #${round.id} — ${takenNumbers.size}/100 cards sold`
-      : 'No active round yet.';
+      ? `Round #${round.id} — ${takenNumbers.size}/100 sold`
+      : 'No active round. Buy a card to start!';
   }
 
   async function login() {
@@ -191,9 +222,11 @@
     $('userName').textContent = currentUser.name;
 
     await refresh();
+    await loadWinners();
     await loadHistory();
+    
     clearInterval(pollTimer);
-    pollTimer = setInterval(refresh, 5000);
+    pollTimer = setInterval(() => { refresh(); loadWinners(); }, 5000); // Auto-refresh every 5s
   }
 
   async function refresh() {
@@ -215,7 +248,7 @@
     const proof = $('depProof').value.trim();
 
     if (!Number.isFinite(amount) || amount <= 0) return alert('Enter a valid amount.');
-    if (!proof) return alert('Please enter the Transaction ID / SMS Reference.');
+    if (!proof) return alert('Enter the Transaction ID / SMS Reference.');
 
     try {
       const data = await api('/api/player/deposit', {
@@ -223,8 +256,7 @@
         body: JSON.stringify({ user_id: currentUser.id, amount, method, proof })
       });
       alert(data.message);
-      $('depAmount').value = '';
-      $('depProof').value = '';
+      $('depAmount').value = ''; $('depProof').value = '';
       await loadHistory();
     } catch (e) { alert(e.message); }
   }
@@ -235,7 +267,7 @@
     const account_details = $('withAccount').value.trim();
 
     if (!Number.isFinite(amount) || amount <= 0) return alert('Enter a valid amount.');
-    if (!account_details) return alert('Please enter your account/phone number.');
+    if (!account_details) return alert('Enter your account number.');
 
     try {
       const data = await api('/api/player/withdraw', {
@@ -243,8 +275,7 @@
         body: JSON.stringify({ user_id: currentUser.id, amount, method, account_details })
       });
       alert(data.message);
-      $('withAmount').value = '';
-      $('withAccount').value = '';
+      $('withAmount').value = ''; $('withAccount').value = '';
       await refresh();
       await loadHistory();
     } catch (e) { alert(e.message); }
@@ -253,7 +284,7 @@
   async function play() {
     if (!selectedNum) return alert('Select a card first.');
     if (Number(currentUser.balance) < CARD_PRICE) return alert('Insufficient balance.');
-    if (!confirm(`Join this round with card ${selectedNum} for ${CARD_PRICE} Birr?`)) return;
+    if (!confirm(`Join with card ${selectedNum} for ${CARD_PRICE} Birr?`)) return;
 
     const btn = $('playBtn');
     btn.disabled = true;
@@ -284,6 +315,45 @@
       data.transactions.forEach(t => items.push(`<li><span>${t.type === 'deposit' ? 'Deposit' : 'Withdraw'} ${Number(t.amount).toFixed(2)} Birr</span><span class="tag ${esc(t.status)}">${esc(t.status)}</span></li>`));
       data.tickets.forEach(t => items.push(`<li><span>Card ${t.card_number} — round #${t.rounds ? t.rounds.id : '?'}</span><span class="tag">${t.rounds ? esc(t.rounds.status) : ''}</span></li>`));
       list.innerHTML = items.length ? items.join('') : '<li>No activity yet.</li>';
+    } catch (e) { console.error(e); }
+  }
+
+  async function loadWinners() {
+    try {
+      const data = await api('/api/player/winners');
+      const list = $('winnersList');
+      if (!data || !data.length) {
+        return list.innerHTML = '<p style="color:#aaa;">No finished rounds yet.</p>';
+      }
+
+      list.innerHTML = data.map(round => {
+        let winnersHtml = '';
+        if (round.winners.length === 0) {
+          winnersHtml = '<li style="color:#888;">No winners for these numbers.</li>';
+        } else {
+          winnersHtml = round.winners.map(w => `
+            <li>
+              <span><b>Card ${w.card_number}</b></span>
+              <span>${esc(w.users?.name)}</span>
+              <span style="color:#aaa;">${esc(w.users?.phone)}</span>
+            </li>
+          `).join('');
+        }
+
+        return `
+          <div style="background:#1b1b2b; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #3b3b58;">
+            <h4 style="margin:0 0 10px; color:var(--accent);">Round #${round.round_id}</h4>
+            <div class="win-balls">
+              <div class="ball">${round.draw_1}</div>
+              <div class="ball">${round.draw_2}</div>
+              <div class="ball">${round.draw_3}</div>
+            </div>
+            <ul class="list" style="margin-top:10px;">
+              ${winnersHtml}
+            </ul>
+          </div>
+        `;
+      }).join('');
     } catch (e) { console.error(e); }
   }
 </script>
