@@ -22,6 +22,7 @@
   .panel { background: var(--panel); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
   h2 { font-size: 18px; margin-bottom: 15px; text-align: center; color: #fff; }
 
+  /* Quick Actions */
   .quick-actions { display: flex; gap: 10px; margin-bottom: 15px; }
   .quick-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 8px; border: none; font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.2s; color: #fff; }
   .quick-btn.deposit { background: rgba(76, 175, 80, 0.15); color: var(--green); border: 1px solid var(--green); }
@@ -51,11 +52,7 @@
   .tag.pending  { background: #f57c00; color: #fff; }
 
   /* Podium Styles */
-  .podium-item {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 12px; border-radius: 8px; margin-bottom: 10px;
-    background: var(--cell);
-  }
+  .podium-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-radius: 8px; margin-bottom: 10px; background: var(--cell); }
   .podium-1 { border-left: 4px solid #FFD700; background: rgba(255, 215, 0, 0.1); }
   .podium-2 { border-left: 4px solid #C0C0C0; background: rgba(192, 192, 192, 0.1); }
   .podium-3 { border-left: 4px solid #CD7F32; background: rgba(205, 127, 50, 0.1); }
@@ -82,7 +79,7 @@
 
 <div id="loginScreen">
   <div class="panel" style="padding: 30px 20px;">
-    <h2 style="color: var(--accent); margin-bottom: 20px;">Dot Bingo</h2>
+    <h2 style="color: var(--accent); margin-bottom: 20px;">Number Game</h2>
     <input type="text" id="name" placeholder="Full Name" autocomplete="name">
     <input type="tel" id="phone" placeholder="Phone Number (09... or +251...)" autocomplete="tel">
     <button onclick="login()" style="margin-top: 10px;">Login / Register</button>
@@ -102,6 +99,7 @@
     </div>
   </div>
 
+  <!-- PLAY VIEW -->
   <div id="view-play" class="view active">
     <div class="quick-actions">
       <button class="quick-btn deposit" onclick="scrollToWallet('depositSection')">
@@ -123,6 +121,7 @@
     </div>
   </div>
 
+  <!-- WINNERS VIEW -->
   <div id="view-winners" class="view">
     <div class="panel">
       <h2>Winners & Results</h2>
@@ -132,6 +131,7 @@
     </div>
   </div>
 
+  <!-- ACTIVITY VIEW -->
   <div id="view-activity" class="view">
     <div class="panel">
       <h2>My Activity</h2>
@@ -141,6 +141,7 @@
     </div>
   </div>
 
+  <!-- WALLET VIEW -->
   <div id="view-wallet" class="view">
     <div class="panel" id="depositSection">
       <h2>💰 Deposit</h2>
@@ -169,6 +170,7 @@
     </div>
   </div>
 
+  <!-- BOTTOM NAVIGATION -->
   <div class="bottom-nav">
     <button class="nav-item active" id="nav-play" onclick="switchView('play')">
       <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
@@ -191,7 +193,7 @@
 </div>
 
 <script>
-  const LIVE_BACKEND_URL = 'https://phone45.vercel.app/'; 
+  const LIVE_BACKEND_URL = 'https://phone45.vercel.app/'; // ⚠️ UPDATE THIS
   const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:3000' : LIVE_BACKEND_URL;
 
   const CARD_PRICE = 100;
@@ -361,15 +363,11 @@
       }
 
       list.innerHTML = data.map(round => {
-        // Helper function to find winner details for a specific drawn number
         const getWinnerData = (drawNum) => {
           if (!round.winners) return null;
           const w = round.winners.find(x => x.card_number === drawNum);
           if (!w) return null;
-          return {
-            name: w.users?.name || w.users?.[0]?.name || 'Unknown',
-            phone: w.users?.phone || w.users?.[0]?.phone || ''
-          };
+          return { name: w.users?.name || 'Unknown', phone: w.users?.phone || '' };
         };
 
         const w1 = getWinnerData(round.draw_1);
@@ -378,17 +376,19 @@
 
         return `
           <div style="margin-bottom: 25px; background: #1e1e2f; border-radius: 10px; padding: 15px; border: 1px solid #3b3b58;">
-            <h4 style="margin-bottom: 15px; font-size: 16px; text-align: center; color: var(--accent);">Round #${round.round_id}</h4>
+            <h4 style="margin-bottom: 5px; font-size: 16px; text-align: center; color: var(--accent);">Round #${round.round_id}</h4>
+            <p style="text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 15px;">${round.total_players} Players • Pool: ${(round.total_players * 100).toFixed(0)} Birr</p>
             
             <!-- 1st Place -->
             <div class="podium-item podium-1">
               <div class="podium-left">
-                <span class="podium-place">🥇 1st Draw</span>
-                <span class="podium-num">Number ${round.draw_1}</span>
+                <span class="podium-place">🥇 1st Place (60%)</span>
+                <span class="podium-num">Number ${round.draw_1 || '-'}</span>
               </div>
               <div class="podium-right">
                 ${w1 
-                  ? `<div class="podium-winner">${esc(w1.name)}</div><div class="podium-phone">${esc(w1.phone)}</div>` 
+                  ? `<div class="podium-winner" style="color: var(--green);">${round.prizes.p1.toFixed(2)} Birr</div>
+                     <div class="podium-phone">${esc(w1.name)} (${esc(w1.phone)})</div>` 
                   : `<span class="no-winner">No Winner</span>`}
               </div>
             </div>
@@ -396,12 +396,13 @@
             <!-- 2nd Place -->
             <div class="podium-item podium-2">
               <div class="podium-left">
-                <span class="podium-place">🥈 2nd Draw</span>
-                <span class="podium-num">Number ${round.draw_2}</span>
+                <span class="podium-place">🥈 2nd Place (10%)</span>
+                <span class="podium-num">Number ${round.draw_2 || '-'}</span>
               </div>
               <div class="podium-right">
                 ${w2 
-                  ? `<div class="podium-winner">${esc(w2.name)}</div><div class="podium-phone">${esc(w2.phone)}</div>` 
+                  ? `<div class="podium-winner" style="color: var(--green);">${round.prizes.p2.toFixed(2)} Birr</div>
+                     <div class="podium-phone">${esc(w2.name)} (${esc(w2.phone)})</div>` 
                   : `<span class="no-winner">No Winner</span>`}
               </div>
             </div>
@@ -409,12 +410,13 @@
             <!-- 3rd Place -->
             <div class="podium-item podium-3">
               <div class="podium-left">
-                <span class="podium-place">🥉 3rd Draw</span>
-                <span class="podium-num">Number ${round.draw_3}</span>
+                <span class="podium-place">🥉 3rd Place (5%)</span>
+                <span class="podium-num">Number ${round.draw_3 || '-'}</span>
               </div>
               <div class="podium-right">
                 ${w3 
-                  ? `<div class="podium-winner">${esc(w3.name)}</div><div class="podium-phone">${esc(w3.phone)}</div>` 
+                  ? `<div class="podium-winner" style="color: var(--green);">${round.prizes.p3.toFixed(2)} Birr</div>
+                     <div class="podium-phone">${esc(w3.name)} (${esc(w3.phone)})</div>` 
                   : `<span class="no-winner">No Winner</span>`}
               </div>
             </div>
