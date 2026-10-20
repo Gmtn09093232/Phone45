@@ -1,0 +1,277 @@
+<!-- public/player.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dot Bingo — Player</title>
+<style>
+  :root { --bg:#1e1e2f; --panel:#2a2a40; --cell:#3b3b58; --accent:#FF9800; --green:#4CAF50; }
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; background: var(--bg); color:#fff; padding:20px; text-align:center; margin:0; }
+  .panel { background: var(--panel); padding:20px; border-radius:10px; max-width:520px; margin:0 auto 20px; transition: all .3s ease; }
+  h2 { margin-top:0; }
+  input, button { padding:10px; margin:5px 0; border-radius:5px; border:none; width:100%; font-size:15px; }
+  input { background:#1b1b2b; color:#fff; }
+  button { background: var(--green); color:#fff; cursor:pointer; font-weight:bold; }
+  button:disabled { background: gray; cursor: not-allowed; }
+  .row { display:flex; gap:10px; }
+  .row > button { flex:1; }
+  .grid { display:grid; grid-template-columns: repeat(10, 1fr); gap:5px; margin-top:15px; }
+  .num { background: var(--cell); padding:10px 0; cursor:pointer; border-radius:5px; font-size:14px; user-select:none; }
+  .num.selected { background: var(--accent); color:#000; font-weight:bold; }
+  .num.taken { background:#232338; color:#555; cursor:not-allowed; text-decoration: line-through; }
+  #balance { color: var(--green); font-size:24px; font-weight:bold; }
+  #selectedInfo { min-height:20px; color: var(--accent); font-weight:bold; }
+  .hidden { display:none; }
+  .highlight-deposit {
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 15px rgba(255,152,0,.5);
+    background:#35354d;
+  }
+  ul.history { list-style:none; padding:0; margin:0; text-align:left; font-size:14px; }
+  ul.history li { padding:6px 0; border-bottom:1px solid #3a3a55; display:flex; justify-content:space-between; gap:8px; }
+  .tag { font-size:12px; padding:2px 6px; border-radius:4px; background:#3b3b58; }
+  .tag.approved { background:#2e7d32; }
+  .tag.rejected { background:#c62828; }
+  .tag.pending  { background:#6d4c41; }
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div class="panel" id="loginPanel">
+  <h2>Player Login</h2>
+  <input type="text" id="name" placeholder="Full Name" autocomplete="name">
+  <input type="tel" id="phone" placeholder="Phone Number (09XXXXXXXX)" autocomplete="tel">
+  <button onclick="login()">Login / Register</button>
+</div>
+
+<!-- Game -->
+<div id="gamePanel" class="hidden">
+
+  <div class="panel" id="depositPanel">
+    <h2>Welcome, <span id="userName"></span></h2>
+    <p>Balance: <span id="balance">0.00</span> Birr</p>
+
+    <input type="number" id="amount" placeholder="Amount (Birr)" min="1" step="1">
+    <div class="row">
+      <button onclick="transaction('deposit')">Request Deposit</button>
+      <button onclick="transaction('withdraw')">Request Withdraw</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Select Card (Cost: 100 Birr)</h2>
+    <p id="roundInfo" style="color:#aaa; font-size:14px;"></p>
+    <div class="grid" id="numberGrid"></div>
+    <p id="selectedInfo"></p>
+    <button id="playBtn" onclick="play()" disabled>Pay 100 Birr &amp; Play</button>
+  </div>
+
+  <div class="panel">
+    <h2>Recent Activity</h2>
+    <ul class="history" id="historyList"><li>No activity yet.</li></ul>
+  </div>
+</div>
+
+<script>
+  const API = 'http://localhost:3000';
+  const CARD_PRICE = 100;
+
+  let currentUser = null;
+  let selectedNum = null;
+  let takenNumbers = new Set();
+  let pollTimer = null;
+
+  const $ = (id) => document.getElementById(id);
+
+  async function api(path, options = {}) {
+    const res = await fetch(API + path, {
+      ...options,
+      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+    return data;
+  }
+
+  // ---------- Grid ----------
+  const grid = $('numberGrid');
+  for (let i = 1; i <= 100; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'num';
+    cell.dataset.num = i;
+    cell.textContent = i;
+    cell.addEventListener('click', () => selectNumber(i));
+    grid.appendChild(cell);
+  }
+
+  function selectNumber(n) {
+    if (takenNumbers.has(n)) {
+      return alert('That card is already taken in this round.');
+    }
+
+    if (!currentUser || Number(currentUser.balance) < CARD_PRICE) {
+      alert(`Insufficient balance. You need at least ${CARD_PRICE} Birr to select a card.`);
+      highlightDeposit();
+      return;
+    }
+
+    selectedNum = n;
+    document.querySelectorAll('.num').forEach(el => {
+      el.classList.toggle('selected', Number(el.dataset.num) === n);
+    });
+    $('selectedInfo').textContent = `Selected card: ${n}`;
+    $('playBtn').disabled = false;
+  }
+
+  function highlightDeposit() {
+    const panel = $('depositPanel');
+    panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    panel.classList.add('highlight-deposit');
+    setTimeout(() => panel.classList.remove('highlight-deposit'), 3000);
+  }
+
+  function renderRound(round, taken) {
+    takenNumbers = new Set((taken || []).map(Number));
+
+    document.querySelectorAll('.num').forEach(el => {
+      const n = Number(el.dataset.num);
+      const isTaken = takenNumbers.has(n);
+      el.classList.toggle('taken', isTaken);
+      if (isTaken && selectedNum === n) {
+        selectedNum = null;
+        el.classList.remove('selected');
+        $('selectedInfo').textContent = '';
+        $('playBtn').disabled = true;
+      }
+    });
+
+    $('roundInfo').textContent = round
+      ? `Round #${round.id} — ${takenNumbers.size}/100 cards sold`
+      : 'No active round yet — buying a card will open one.';
+  }
+
+  // ---------- Auth ----------
+  async function login() {
+    const name = $('name').value.trim();
+    const phone = $('phone').value.trim();
+
+    if (!name || !phone) return alert('Fill in all fields.');
+
+    try {
+      currentUser = await api('/api/player/login', {
+        method: 'POST',
+        body: JSON.stringify({ name, phone })
+      });
+    } catch (e) {
+      return alert(e.message);
+    }
+
+    $('loginPanel').classList.add('hidden');
+    $('gamePanel').classList.remove('hidden');
+    $('userName').textContent = currentUser.name;
+
+    await refresh();
+    await loadHistory();
+
+    clearInterval(pollTimer);
+    pollTimer = setInterval(refresh, 5000);
+  }
+
+  // ---------- Data refresh ----------
+  async function refresh() {
+    if (!currentUser) return;
+    try {
+      const [me, round] = await Promise.all([
+        api(`/api/player/data/${currentUser.id}`),
+        api('/api/player/round')
+      ]);
+
+      currentUser.balance = Number(me.balance);
+      $('balance').textContent = currentUser.balance.toFixed(2);
+      renderRound(round.round, round.taken);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  // ---------- Money ----------
+  async function transaction(type) {
+    const amount = Number($('amount').value);
+    if (!Number.isFinite(amount) || amount <= 0) return alert('Enter a valid amount.');
+
+    try {
+      const data = await api(`/api/player/${type}`, {
+        method: 'POST',
+        body: JSON.stringify({ user_id: currentUser.id, amount })
+      });
+      alert(data.message);
+      $('amount').value = '';
+      await refresh();
+      await loadHistory();
+    } catch (e) {
+      alert(e.message);
+    }
+  }
+
+  // ---------- Play ----------
+  async function play() {
+    if (!selectedNum) return alert('Select a card first.');
+    if (Number(currentUser.balance) < CARD_PRICE) return alert('Insufficient balance.');
+
+    if (!confirm(`Join this round with card ${selectedNum} for ${CARD_PRICE} Birr?`)) return;
+
+    const btn = $('playBtn');
+    btn.disabled = true;
+
+    try {
+      const data = await api('/api/player/play', {
+        method: 'POST',
+        body: JSON.stringify({ user_id: currentUser.id, card_number: selectedNum })
+      });
+      alert(data.message);
+      selectedNum = null;
+      $('selectedInfo').textContent = '';
+      await refresh();
+      await loadHistory();
+    } catch (e) {
+      alert(e.message);
+      btn.disabled = false;
+    }
+  }
+
+  // ---------- History ----------
+  const esc = (s) => String(s).replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+  async function loadHistory() {
+    if (!currentUser) return;
+    try {
+      const data = await api(`/api/player/history/${currentUser.id}`);
+      const list = $('historyList');
+      const items = [];
+
+      data.transactions.forEach(t => {
+        items.push(`<li>
+          <span>${t.type === 'deposit' ? 'Deposit' : 'Withdraw'} ${Number(t.amount).toFixed(2)} Birr</span>
+          <span class="tag ${esc(t.status)}">${esc(t.status)}</span>
+        </li>`);
+      });
+
+      data.tickets.forEach(t => {
+        items.push(`<li>
+          <span>Card ${t.card_number} — round #${t.rounds ? t.rounds.id : '?'}</span>
+          <span class="tag">${t.rounds ? esc(t.rounds.status) : ''}</span>
+        </li>`);
+      });
+
+      list.innerHTML = items.length ? items.join('') : '<li>No activity yet.</li>';
+    } catch (e) {
+      console.error(e);
+    }
+  }
+</script>
+</body>
+</html>
