@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dot Bingo — Admin</title>
 <style>
-  :root { --bg:#161622; --panel:#242438; --accent:#FF9800; --green:#4CAF50; --red:#e53935; }
+  :root { --bg:#161622; --panel:#242438; --accent:#FF9800; --green:#4CAF50; --red:#e53935; --blue:#2196F3; }
   * { box-sizing: border-box; }
   body { font-family: system-ui, sans-serif; background: var(--bg); color:#fff; margin:0; padding:20px; }
   h1 { text-align:center; margin-top:0; }
@@ -13,19 +13,26 @@
   h2 { margin-top:0; font-size:18px; color: var(--accent); }
   input, button { padding:10px; border-radius:5px; border:none; font-size:15px; }
   input { background:#1b1b2b; color:#fff; width:100%; }
-  button { background: var(--green); color:#fff; cursor:pointer; font-weight:bold; }
-  button:disabled { background: gray; cursor:not-allowed; }
+  button { background: var(--green); color:#fff; cursor:pointer; font-weight:bold; transition: 0.2s; }
+  button:active { transform: scale(0.98); }
+  button:disabled { background: gray; cursor:not-allowed; transform:none; }
   button.danger { background: var(--red); }
+  button.blue { background: var(--blue); }
   .row { display:flex; gap:10px; align-items:center; }
   .row > input { flex:1; }
   table { width:100%; border-collapse:collapse; font-size:14px; }
-  th, td { padding:8px; text-align:left; border-bottom:1px solid #343450; }
+  th, td { padding:10px 8px; text-align:left; border-bottom:1px solid #343450; }
   th { color:#9aa; font-weight:600; }
   .empty { color:#888; font-style:italic; }
   .btn-sm { padding:6px 12px; font-size:13px; }
   .hidden { display:none; }
   .badge { background:#3b3b58; padding:2px 6px; border-radius:4px; font-size:12px; text-transform:uppercase; }
-  .proof-text { font-family: monospace; background: #1b1b2b; padding: 4px; border-radius: 4px; }
+  .proof-text { font-family: monospace; background: #1b1b2b; padding: 4px 8px; border-radius: 4px; font-size: 13px; border: 1px solid #3b3b58; }
+  
+  /* Winner styles */
+  .place-1 { color: #FFD700; font-weight: bold; }
+  .place-2 { color: #C0C0C0; font-weight: bold; }
+  .place-3 { color: #CD7F32; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -41,6 +48,8 @@
 </div>
 
 <div id="adminPanel" class="hidden">
+  
+  <!-- PENDING TRANSACTIONS -->
   <div class="panel">
     <h2>Pending Transactions</h2>
     <table>
@@ -51,6 +60,7 @@
     </table>
   </div>
 
+  <!-- ACTIVE ROUND & CONTROLS -->
   <div class="panel">
     <h2>Active Round Players</h2>
     <table>
@@ -59,15 +69,32 @@
     </table>
 
     <div class="row" style="margin-top:20px;">
-      <button onclick="draw()">Draw Winners</button>
-      <button onclick="newRound()">Start New Round</button>
+      <button onclick="draw()" style="background: var(--accent); color: #000;">Draw Winners</button>
+      <button onclick="newRound()" class="blue">Start New Round</button>
     </div>
   </div>
+
+  <!-- PAST WINNERS LIST -->
+  <div class="panel">
+    <h2>Past Winners & History</h2>
+    <table>
+      <thead>
+        <tr><th>Round</th><th>Place</th><th>Winner</th><th>Phone</th><th>Prize Amount</th></tr>
+      </thead>
+      <tbody id="winnersBody"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
+    </table>
+  </div>
+
 </div>
 
 <script>
   const LIVE_BACKEND_URL = 'https://phone45.vercel.app/'; // ⚠️ UPDATE THIS
   const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:3000' : LIVE_BACKEND_URL;
+
+  // Set the prize amounts here
+  const PRIZE_1 = 5000;
+  const PRIZE_2 = 3000;
+  const PRIZE_3 = 2000;
 
   let adminKey = localStorage.getItem('dotBingoAdminKey') || '';
   let timer = null;
@@ -100,7 +127,7 @@
   }
 
   async function refreshAll() {
-    await Promise.all([loadTransactions(), loadPlayers()]);
+    await Promise.all([loadTransactions(), loadPlayers(), loadWinners()]);
   }
 
   async function loadTransactions() {
@@ -150,6 +177,62 @@
       body.innerHTML = players.map(p => `<tr><td>${esc(p.card_number)}</td><td>${esc(p.users?.name)}</td><td>${esc(p.users?.phone)}</td></tr>`).join('');
     } catch (e) {
       $('playerBody').innerHTML = `<tr><td colspan="3" class="empty">${esc(e.message)}</td></tr>`;
+    }
+  }
+
+  async function loadWinners() {
+    try {
+      const rounds = await api('/api/admin/winners');
+      const body = $('winnersBody');
+      
+      if (!rounds || !rounds.length) {
+        return body.innerHTML = '<tr><td colspan="5" class="empty">No rounds finished yet.</td></tr>';
+      }
+
+      let html = '';
+      
+      rounds.forEach(round => {
+        // Find winner for each draw
+        const getWinner = (num) => {
+          if (!round.winners) return null;
+          const w = round.winners.find(x => x.card_number === num);
+          if (!w) return null;
+          return { name: w.users?.name || 'Unknown', phone: w.users?.phone || '' };
+        };
+
+        const w1 = getWinner(round.draw_1);
+        const w2 = getWinner(round.draw_2);
+        const w3 = getWinner(round.draw_3);
+
+        // Row 1 (1st place)
+        html += `<tr>
+          <td rowspan="3" style="vertical-align:top; font-weight:bold; border-bottom: 2px solid #555;">Round<br>#${round.round_id}</td>
+          <td class="place-1">🥇 1st (${round.draw_1})</td>
+          <td>${w1 ? esc(w1.name) : '<span class="empty">No Winner</span>'}</td>
+          <td>${w1 ? esc(w1.phone) : '-'}</td>
+          <td style="color: var(--green); font-weight: bold;">${w1 ? PRIZE_1.toFixed(2) + ' Birr' : '-'}</td>
+        </tr>`;
+
+        // Row 2 (2nd place)
+        html += `<tr>
+          <td class="place-2">🥈 2nd (${round.draw_2})</td>
+          <td>${w2 ? esc(w2.name) : '<span class="empty">No Winner</span>'}</td>
+          <td>${w2 ? esc(w2.phone) : '-'}</td>
+          <td style="color: var(--green); font-weight: bold;">${w2 ? PRIZE_2.toFixed(2) + ' Birr' : '-'}</td>
+        </tr>`;
+
+        // Row 3 (3rd place)
+        html += `<tr>
+          <td class="place-3" style="border-bottom: 2px solid #555;">🥉 3rd (${round.draw_3})</td>
+          <td style="border-bottom: 2px solid #555;">${w3 ? esc(w3.name) : '<span class="empty">No Winner</span>'}</td>
+          <td style="border-bottom: 2px solid #555;">${w3 ? esc(w3.phone) : '-'}</td>
+          <td style="border-bottom: 2px solid #555; color: var(--green); font-weight: bold;">${w3 ? PRIZE_3.toFixed(2) + ' Birr' : '-'}</td>
+        </tr>`;
+      });
+      
+      body.innerHTML = html;
+    } catch (e) {
+      $('winnersBody').innerHTML = `<tr><td colspan="5" class="empty">${esc(e.message)}</td></tr>`;
     }
   }
 
