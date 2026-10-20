@@ -1,4 +1,3 @@
-// server.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -8,7 +7,12 @@ const { createClient } = require('@supabase/supabase-js');
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '')));
+
+// request logger
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.originalUrl}`);
+  next();
+});
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -19,10 +23,9 @@ const supabase = createClient(
 const CARD_PRICE = 100;
 const PHONE_RE = /^0\d{9}$/;
 
-// async route wrapper
-const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+const wrap = (fn) => (req, res, next) =>
+  Promise.resolve(fn(req, res, next)).catch(next);
 
-// admin auth guard
 function adminOnly(req, res, next) {
   const key = req.get('x-admin-key');
   if (!key || key !== process.env.ADMIN_KEY) {
@@ -31,9 +34,19 @@ function adminOnly(req, res, next) {
   next();
 }
 
+// ---------- STATIC PAGES (no public folder needed) ----------
+app.get(['/', '/player.html'], (req, res) =>
+  res.sendFile(path.join(__dirname, 'player.html'))
+);
+app.get('/admin.html', (req, res) =>
+  res.sendFile(path.join(__dirname, 'admin.html'))
+);
+
+// ---------- HEALTH ----------
+app.get('/api/health', (req, res) => res.json({ ok: true }));
+
 // ---------- PLAYER ROUTES ----------
 
-// Login / Register
 app.post('/api/player/login', wrap(async (req, res) => {
   const name = String(req.body.name || '').trim();
   const phone = String(req.body.phone || '').replace(/\s+/g, '');
@@ -58,16 +71,15 @@ app.post('/api/player/login', wrap(async (req, res) => {
   res.json(user);
 }));
 
-// Balance / profile
 app.get('/api/player/data/:user_id', wrap(async (req, res) => {
   const { data, error } = await supabase
-    .from('users').select('id, name, balance').eq('id', req.params.user_id).maybeSingle();
+    .from('users').select('id, name, balance')
+    .eq('id', req.params.user_id).maybeSingle();
   if (error) throw error;
   if (!data) return res.status(404).json({ error: 'User not found' });
   res.json(data);
 }));
 
-// Request deposit
 app.post('/api/player/deposit', wrap(async (req, res) => {
   const user_id = Number(req.body.user_id);
   const amount = Number(req.body.amount);
@@ -81,13 +93,13 @@ app.post('/api/player/deposit', wrap(async (req, res) => {
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   const { error } = await supabase
-    .from('transactions').insert({ user_id, type: 'deposit', amount, status: 'pending' });
+    .from('transactions')
+    .insert({ user_id, type: 'deposit', amount, status: 'pending' });
   if (error) throw error;
 
   res.json({ message: 'Deposit request sent. Waiting for admin approval.' });
 }));
 
-// Request withdrawal (atomic — balance deducted immediately)
 app.post('/api/player/withdraw', wrap(async (req, res) => {
   const user_id = Number(req.body.user_id);
   const amount = Number(req.body.amount);
@@ -108,7 +120,6 @@ app.post('/api/player/withdraw', wrap(async (req, res) => {
   });
 }));
 
-// Join round
 app.post('/api/player/play', wrap(async (req, res) => {
   const user_id = Number(req.body.user_id);
   const card_number = Number(req.body.card_number);
@@ -127,10 +138,10 @@ app.post('/api/player/play', wrap(async (req, res) => {
   });
 }));
 
-// Active round + taken cards (used to grey out unavailable numbers)
 app.get('/api/player/round', wrap(async (req, res) => {
   const { data: round, error: rErr } = await supabase
-    .from('rounds').select('id, status, created_at').eq('status', 'active').maybeSingle();
+    .from('rounds').select('id, status, created_at')
+    .eq('status', 'active').maybeSingle();
   if (rErr) throw rErr;
   if (!round) return res.json({ round: null, taken: [] });
 
@@ -141,7 +152,6 @@ app.get('/api/player/round', wrap(async (req, res) => {
   res.json({ round, taken: (tickets || []).map(t => t.card_number) });
 }));
 
-// Transaction + ticket history
 app.get('/api/player/history/:user_id', wrap(async (req, res) => {
   const user_id = req.params.user_id;
 
@@ -166,7 +176,6 @@ app.get('/api/player/history/:user_id', wrap(async (req, res) => {
 
 // ---------- ADMIN ROUTES ----------
 
-// Pending transactions
 app.get('/api/admin/transactions', adminOnly, wrap(async (req, res) => {
   const { data, error } = await supabase
     .from('transactions')
@@ -177,7 +186,6 @@ app.get('/api/admin/transactions', adminOnly, wrap(async (req, res) => {
   res.json(data);
 }));
 
-// Approve / reject a transaction
 app.post('/api/admin/transaction/:id', adminOnly, wrap(async (req, res) => {
   const { data, error } = await supabase.rpc('resolve_transaction', {
     p_tx_id: Number(req.params.id),
@@ -187,7 +195,6 @@ app.post('/api/admin/transaction/:id', adminOnly, wrap(async (req, res) => {
   res.json({ message: `Transaction ${data.status}`, ...data });
 }));
 
-// Players in the active round
 app.get('/api/admin/players', adminOnly, wrap(async (req, res) => {
   const { data: round, error: rErr } = await supabase
     .from('rounds').select('id').eq('status', 'active').maybeSingle();
@@ -204,14 +211,12 @@ app.get('/api/admin/players', adminOnly, wrap(async (req, res) => {
   res.json({ round, players: data });
 }));
 
-// Draw the winners
 app.post('/api/admin/draw', adminOnly, wrap(async (req, res) => {
   const { data, error } = await supabase.rpc('finish_round');
   if (error) return res.status(400).json({ error: error.message });
   res.json(data);
 }));
 
-// Start a new round
 app.post('/api/admin/new-round', adminOnly, wrap(async (req, res) => {
   const { data: existing } = await supabase
     .from('rounds').select('id').eq('status', 'active').maybeSingle();
@@ -224,9 +229,21 @@ app.post('/api/admin/new-round', adminOnly, wrap(async (req, res) => {
   res.json({ message: 'New round created.', round: data });
 }));
 
-// ---------- ERRORS ----------
-app.use((req, res) => res.status(404).json({ error: 'Not found' }));
+// ---------- 404 ----------
+app.use((req, res) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({
+      error: `No API route for ${req.method} ${req.path}`
+    });
+  }
+  res.status(404).type('html').send(`
+    <h1>404 — ${req.path}</h1>
+    <p>Try <a href="/player.html">/player.html</a> or
+       <a href="/admin.html">/admin.html</a>.</p>
+  `);
+});
 
+// ---------- ERROR HANDLER ----------
 app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).json({ error: err.message || 'Server error' });
