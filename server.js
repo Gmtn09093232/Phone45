@@ -25,10 +25,69 @@ function adminOnly(req, res, next) {
   next();
 }
 
-// ---------- STATIC PAGES ----------
 app.get(['/', '/player', '/player.html'], (req, res) => res.sendFile(path.join(__dirname, 'player.html')));
 app.get(['/admin', '/admin.html'], (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/api/health', (req, res) => res.json({ ok: true }));
+
+// --- HELPER FUNCTION TO FETCH WINNERS WITH PRIZES ---
+async function fetchWinners(limit) {
+  const { data: rounds, error: rErr } = await supabase
+    .from('rounds')
+    .select('id, draw_1, draw_2, draw_3, finished_at')
+    .eq('status', 'finished')
+    .order('finished_at', { ascending: false })
+    .limit(limit);
+    
+  if (rErr) throw rErr;
+  if (!rounds || rounds.length === 0) return [];
+
+  const results = [];
+  for (const round of rounds) {
+    // Get tickets sold in this round
+    const { data: allTickets, error: cErr } = await supabase
+      .from('tickets')
+      .select('*', { count: 'exact' })
+      .eq('round_id', round.id);
+
+    if (cErr) throw cErr;
+    const totalTickets = allTickets.length;
+    const totalPool = totalTickets * 100;
+    
+    // Calculate prizes
+    const prizes = {
+      p1: totalPool * 0.60,
+      p2: totalPool * 0.10,
+      p3: totalPool * 0.05
+    };
+
+    // Get winners for the specific drawn numbers
+    const winningNumbers = [round.draw_1, round.draw_2, round.draw_3].filter(n => n !== null);
+    let winners = [];
+    
+    if (winningNumbers.length > 0) {
+      const { data: tickets, error: tErr } = await supabase
+        .from('tickets')
+        .select('card_number, users (name, phone)')
+        .eq('round_id', round.id)
+        .in('card_number', winningNumbers);
+        
+      if (tErr) throw tErr;
+      winners = tickets || [];
+    }
+
+    results.push({
+      round_id: round.id,
+      draw_1: round.draw_1,
+      draw_2: round.draw_2,
+      draw_3: round.draw_3,
+      finished_at: round.finished_at,
+      total_players: totalTickets,
+      prizes: prizes,
+      winners: winners
+    });
+  }
+  return results;
+}
 
 // ---------- PLAYER ROUTES ----------
 app.post('/api/player/login', wrap(async (req, res) => {
@@ -73,7 +132,6 @@ app.post('/api/player/withdraw', wrap(async (req, res) => {
   if (!Number.isFinite(amount) || amount <= 0) return res.status(400).json({ error: 'Invalid amount' });
   if (!account_details) return res.status(400).json({ error: 'Account details required' });
 
-  // Ensure your Supabase RPC function `request_withdrawal` accepts p_method and p_account!
   const { data, error } = await supabase.rpc('request_withdrawal', {
     p_user_id: user_id, p_amount: amount, p_method: method, p_account: account_details
   });
@@ -105,75 +163,14 @@ app.get('/api/player/history/:user_id', wrap(async (req, res) => {
   res.json({ transactions: tx.data, tickets: tickets.data });
 }));
 
-// PLAYER WINNERS ROUTE
 app.get('/api/player/winners', wrap(async (req, res) => {
-  const { data: rounds, error: rErr } = await supabase
-    .from('rounds')
-    .select('id, draw_1, draw_2, draw_3, finished_at')
-    .eq('status', 'finished')
-    .order('finished_at', { ascending: false })
-    .limit(5);
-    
-  if (rErr) throw rErr;
-  if (!rounds || rounds.length === 0) return res.json([]);
-
-  const results = [];
-  for (const round of rounds) {
-    const winningNumbers = [round.draw_1, round.draw_2, round.draw_3];
-    const { data: tickets, error: tErr } = await supabase
-      .from('tickets')
-      .select('card_number, users (name, phone)')
-      .eq('round_id', round.id)
-      .in('card_number', winningNumbers);
-
-    if (tErr) throw tErr;
-
-    results.push({
-      round_id: round.id,
-      draw_1: round.draw_1,
-      draw_2: round.draw_2,
-      draw_3: round.draw_3,
-      finished_at: round.finished_at,
-      winners: tickets || []
-    });
-  }
+  const results = await fetchWinners(5);
   res.json(results);
 }));
 
 // ---------- ADMIN ROUTES ----------
-
-// ADMIN WINNERS ROUTE
 app.get('/api/admin/winners', adminOnly, wrap(async (req, res) => {
-  const { data: rounds, error: rErr } = await supabase
-    .from('rounds')
-    .select('id, draw_1, draw_2, draw_3, finished_at')
-    .eq('status', 'finished')
-    .order('finished_at', { ascending: false })
-    .limit(10); // Shows the last 10 rounds
-    
-  if (rErr) throw rErr;
-  if (!rounds || rounds.length === 0) return res.json([]);
-
-  const results = [];
-  for (const round of rounds) {
-    const winningNumbers = [round.draw_1, round.draw_2, round.draw_3];
-    const { data: tickets, error: tErr } = await supabase
-      .from('tickets')
-      .select('card_number, users (name, phone)')
-      .eq('round_id', round.id)
-      .in('card_number', winningNumbers);
-
-    if (tErr) throw tErr;
-
-    results.push({
-      round_id: round.id,
-      draw_1: round.draw_1,
-      draw_2: round.draw_2,
-      draw_3: round.draw_3,
-      finished_at: round.finished_at,
-      winners: tickets || []
-    });
-  }
+  const results = await fetchWinners(10);
   res.json(results);
 }));
 
@@ -211,9 +208,8 @@ app.post('/api/admin/new-round', adminOnly, wrap(async (req, res) => {
   res.json({ message: 'New round created.', round: data });
 }));
 
-// ---------- 404 & ERROR HANDLERS ----------
 app.use((req, res) => res.status(404).json({ error: `No API route for ${req.method} ${req.path}` }));
 app.use((err, req, res, next) => { console.error(err); res.status(500).json({ error: err.message || 'Server error' }); });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Dot Bingo server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
