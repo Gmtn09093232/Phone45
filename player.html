@@ -7,7 +7,7 @@
 <style>
   :root { --bg: #12121f; --panel: #1e1e2f; --cell: #2a2a40; --accent: #2196F3; --green: #4CAF50; --red: #f44336; --text: #ffffff; --text-muted: #888; }
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-  body { background: var(--bg); color: var(--text); padding-bottom: 85px; /* Space for nav */ }
+  body { background: var(--bg); color: var(--text); padding-bottom: 85px; }
   
   .top-bar { background: var(--panel); padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
   .user-info { text-align: left; font-size: 14px; }
@@ -22,7 +22,6 @@
   .panel { background: var(--panel); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
   h2 { font-size: 18px; margin-bottom: 15px; text-align: center; color: #fff; }
 
-  /* Quick Actions */
   .quick-actions { display: flex; gap: 10px; margin-bottom: 15px; }
   .quick-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 12px; border-radius: 8px; border: none; font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.2s; color: #fff; }
   .quick-btn.deposit { background: rgba(76, 175, 80, 0.15); color: var(--green); border: 1px solid var(--green); }
@@ -30,8 +29,7 @@
   .quick-btn:active { transform: scale(0.97); }
   .quick-btn svg { width: 18px; height: 18px; }
 
-  /* Inputs & Buttons */
-  input, select, button { padding: 14px; margin-bottom: 10px; border-radius: 8px; border: none; width: 100%; font-size: 16px; /* Prevents iOS zoom */ }
+  input, select, button { padding: 14px; margin-bottom: 10px; border-radius: 8px; border: none; width: 100%; font-size: 16px; }
   input, select { background: var(--cell); color: #fff; border: 1px solid #3b3b58; }
   button { background: var(--accent); color: #fff; cursor: pointer; font-weight: bold; transition: 0.2s; }
   button:active { opacity: 0.8; transform: scale(0.98); }
@@ -74,7 +72,6 @@
   .nav-item svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .nav-item.active { background: var(--accent); color: #fff; box-shadow: 0 4px 10px rgba(33, 150, 243, 0.4); }
 
-  /* Login Screen */
   #loginScreen { display: flex; flex-direction: column; justify-content: center; height: 100vh; padding: 20px; max-width: 400px; margin: 0 auto; }
   .hidden { display: none !important; }
   .highlight { border: 2px solid var(--accent); box-shadow: 0 0 15px rgba(33, 150, 243, 0.5); transition: 0.3s; }
@@ -118,10 +115,10 @@
     </div>
 
     <div class="panel">
-      <h2>Select Card (100 Birr)</h2>
+      <h2>Select Cards (100 Birr Each)</h2>
       <p id="roundInfo" style="text-align: center; color: var(--text-muted); font-size: 13px; margin-bottom: 10px;"></p>
       <div class="grid" id="numberGrid"></div>
-      <p id="selectedInfo" style="text-align: center; color: var(--accent); font-weight: bold; margin-bottom: 10px; min-height: 20px;"></p>
+      <p id="selectedInfo" style="text-align: center; color: var(--accent); font-weight: bold; margin-bottom: 10px; min-height: 20px;">No cards selected</p>
       <button id="playBtn" class="btn-green" onclick="play()" disabled>Pay & Play</button>
     </div>
   </div>
@@ -203,7 +200,7 @@
 
   const CARD_PRICE = 100;
   let currentUser = null;
-  let selectedNum = null;
+  let selectedNums = new Set(); // Now stores multiple numbers
   let takenNumbers = new Set();
   let pollTimer = null;
 
@@ -248,31 +245,61 @@
 
   function selectNumber(n) {
     if (takenNumbers.has(n)) return alert('That card is already taken.');
-    if (!currentUser || Number(currentUser.balance) < CARD_PRICE) {
-      alert(`Insufficient balance. You need ${CARD_PRICE} Birr.`);
-      scrollToWallet('depositSection');
+
+    // Toggle selection
+    if (selectedNums.has(n)) {
+      selectedNums.delete(n);
+      document.querySelector(`.num[data-num="${n}"]`).classList.remove('selected');
+    } else {
+      selectedNums.add(n);
+      document.querySelector(`.num[data-num="${n}"]`).classList.add('selected');
+    }
+
+    updatePlayButton();
+  }
+
+  function updatePlayButton() {
+    const count = selectedNums.size;
+    const totalCost = count * CARD_PRICE;
+    const btn = $('playBtn');
+
+    if (count === 0) {
+      $('selectedInfo').textContent = 'No cards selected';
+      btn.textContent = 'Pay & Play';
+      btn.disabled = true;
       return;
     }
-    selectedNum = n;
-    document.querySelectorAll('.num').forEach(el => {
-      el.classList.toggle('selected', Number(el.dataset.num) === n);
-    });
-    $('selectedInfo').textContent = `Selected: ${n}`;
-    $('playBtn').disabled = false;
+
+    $('selectedInfo').textContent = `${count} card(s) selected: ${Array.from(selectedNums).join(', ')}`;
+    btn.textContent = `Pay ${totalCost} Birr & Play`;
+
+    if (!currentUser || Number(currentUser.balance) < totalCost) {
+      btn.disabled = true;
+      btn.textContent = `Need ${totalCost} Birr`;
+    } else {
+      btn.disabled = false;
+    }
   }
 
   function renderRound(round, taken) {
     takenNumbers = new Set((taken || []).map(Number));
+    
+    // Remove selections that became taken
+    let changed = false;
+    selectedNums.forEach(n => {
+      if (takenNumbers.has(n)) {
+        selectedNums.delete(n);
+        changed = true;
+      }
+    });
+    if (changed) updatePlayButton();
+
     document.querySelectorAll('.num').forEach(el => {
       const n = Number(el.dataset.num);
       el.classList.toggle('taken', takenNumbers.has(n));
-      if (takenNumbers.has(n) && selectedNum === n) {
-        selectedNum = null;
-        el.classList.remove('selected');
-        $('selectedInfo').textContent = '';
-        $('playBtn').disabled = true;
-      }
+      if (takenNumbers.has(n)) el.classList.remove('selected');
     });
+    
     $('roundInfo').textContent = round ? `Round #${round.id} — ${takenNumbers.size}/100 Cards Sold` : 'No active round. Buy a card to start!';
   }
 
@@ -300,6 +327,7 @@
       currentUser.balance = Number(me.balance);
       $('balance').textContent = currentUser.balance.toFixed(2);
       renderRound(round.round, round.taken);
+      updatePlayButton(); // Re-check balance
     } catch (e) { console.error(e); }
   }
 
@@ -332,17 +360,41 @@
   }
 
   async function play() {
-    if (!selectedNum) return alert('Select a card first.');
-    if (Number(currentUser.balance) < CARD_PRICE) return alert('Insufficient balance.');
-    if (!confirm(`Join with card ${selectedNum} for ${CARD_PRICE} Birr?`)) return;
+    if (selectedNums.size === 0) return;
+    
+    const count = selectedNums.size;
+    const totalCost = count * CARD_PRICE;
+    
+    if (Number(currentUser.balance) < totalCost) return alert('Insufficient balance.');
+    if (!confirm(`Join round with ${count} card(s) for ${totalCost} Birr?\n\nCards: ${Array.from(selectedNums).join(', ')}`)) return;
+
     const btn = $('playBtn');
     btn.disabled = true;
+    btn.textContent = 'Processing...';
+
     try {
-      const data = await api('/api/player/play', { method: 'POST', body: JSON.stringify({ user_id: currentUser.id, card_number: selectedNum }) });
+      const data = await api('/api/player/play', { 
+        method: 'POST', 
+        body: JSON.stringify({ 
+          user_id: currentUser.id, 
+          card_numbers: Array.from(selectedNums) 
+        }) 
+      });
+      
       alert(data.message);
-      selectedNum = null; $('selectedInfo').textContent = '';
-      await refresh(); await loadHistory();
-    } catch (e) { alert(e.message); btn.disabled = false; }
+      
+      // Clear selections
+      selectedNums.clear();
+      document.querySelectorAll('.num').forEach(el => el.classList.remove('selected'));
+      updatePlayButton();
+      
+      await refresh(); 
+      await loadHistory();
+    } catch (e) { 
+      alert(e.message); 
+      btn.disabled = false; 
+      updatePlayButton();
+    }
   }
 
   const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
