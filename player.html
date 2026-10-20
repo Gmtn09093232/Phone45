@@ -23,11 +23,7 @@
   #balance { color: var(--green); font-size:24px; font-weight:bold; }
   #selectedInfo { min-height:20px; color: var(--accent); font-weight:bold; }
   .hidden { display:none; }
-  .highlight-deposit {
-    border: 2px solid var(--accent);
-    box-shadow: 0 0 15px rgba(255,152,0,.5);
-    background:#35354d;
-  }
+  .highlight-deposit { border: 2px solid var(--accent); box-shadow: 0 0 15px rgba(255,152,0,.5); background:#35354d; }
   ul.history { list-style:none; padding:0; margin:0; text-align:left; font-size:14px; }
   ul.history li { padding:6px 0; border-bottom:1px solid #3a3a55; display:flex; justify-content:space-between; gap:8px; }
   .tag { font-size:12px; padding:2px 6px; border-radius:4px; background:#3b3b58; }
@@ -41,16 +37,14 @@
 <div class="panel" id="loginPanel">
   <h2>Player Login</h2>
   <input type="text" id="name" placeholder="Full Name" autocomplete="name">
-  <input type="tel" id="phone" placeholder="Phone Number (09XXXXXXXX)" autocomplete="tel">
+  <input type="tel" id="phone" placeholder="Phone Number (09... or +251...)" autocomplete="tel">
   <button onclick="login()">Login / Register</button>
 </div>
 
 <div id="gamePanel" class="hidden">
-
   <div class="panel" id="depositPanel">
     <h2>Welcome, <span id="userName"></span></h2>
     <p>Balance: <span id="balance">0.00</span> Birr</p>
-
     <input type="number" id="amount" placeholder="Amount (Birr)" min="1" step="1">
     <div class="row">
       <button onclick="transaction('deposit')">Request Deposit</button>
@@ -73,9 +67,15 @@
 </div>
 
 <script>
-  const API = 'http://localhost:3000';
-  const CARD_PRICE = 100;
+  // ⚠️ CHANGE THIS TO YOUR DEPLOYED BACKEND URL (e.g., https://my-backend.onrender.com)
+  // If running locally, it will automatically use localhost.
+  const LIVE_BACKEND_URL = 'https://YOUR-BACKEND-URL-HERE.com'; 
+  
+  const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    ? 'http://localhost:3000' 
+    : LIVE_BACKEND_URL;
 
+  const CARD_PRICE = 100;
   let currentUser = null;
   let selectedNum = null;
   let takenNumbers = new Set();
@@ -104,16 +104,12 @@
   }
 
   function selectNumber(n) {
-    if (takenNumbers.has(n)) {
-      return alert('That card is already taken in this round.');
-    }
-
+    if (takenNumbers.has(n)) return alert('That card is already taken in this round.');
     if (!currentUser || Number(currentUser.balance) < CARD_PRICE) {
-      alert(`Insufficient balance. You need at least ${CARD_PRICE} Birr to select a card.`);
+      alert(`Insufficient balance. You need at least ${CARD_PRICE} Birr.`);
       highlightDeposit();
       return;
     }
-
     selectedNum = n;
     document.querySelectorAll('.num').forEach(el => {
       el.classList.toggle('selected', Number(el.dataset.num) === n);
@@ -131,28 +127,24 @@
 
   function renderRound(round, taken) {
     takenNumbers = new Set((taken || []).map(Number));
-
     document.querySelectorAll('.num').forEach(el => {
       const n = Number(el.dataset.num);
-      const isTaken = takenNumbers.has(n);
-      el.classList.toggle('taken', isTaken);
-      if (isTaken && selectedNum === n) {
+      el.classList.toggle('taken', takenNumbers.has(n));
+      if (takenNumbers.has(n) && selectedNum === n) {
         selectedNum = null;
         el.classList.remove('selected');
         $('selectedInfo').textContent = '';
         $('playBtn').disabled = true;
       }
     });
-
     $('roundInfo').textContent = round
       ? `Round #${round.id} — ${takenNumbers.size}/100 cards sold`
-      : 'No active round yet — buying a card will open one.';
+      : 'No active round yet.';
   }
 
   async function login() {
     const name = $('name').value.trim();
     const phone = $('phone').value.trim();
-
     if (!name || !phone) return alert('Fill in all fields.');
 
     try {
@@ -170,7 +162,6 @@
 
     await refresh();
     await loadHistory();
-
     clearInterval(pollTimer);
     pollTimer = setInterval(refresh, 5000);
   }
@@ -182,19 +173,15 @@
         api(`/api/player/data/${currentUser.id}`),
         api('/api/player/round')
       ]);
-
       currentUser.balance = Number(me.balance);
       $('balance').textContent = currentUser.balance.toFixed(2);
       renderRound(round.round, round.taken);
-    } catch (e) {
-      console.error(e);
-    }
+    } catch (e) { console.error(e); }
   }
 
   async function transaction(type) {
     const amount = Number($('amount').value);
     if (!Number.isFinite(amount) || amount <= 0) return alert('Enter a valid amount.');
-
     try {
       const data = await api(`/api/player/${type}`, {
         method: 'POST',
@@ -204,20 +191,16 @@
       $('amount').value = '';
       await refresh();
       await loadHistory();
-    } catch (e) {
-      alert(e.message);
-    }
+    } catch (e) { alert(e.message); }
   }
 
   async function play() {
     if (!selectedNum) return alert('Select a card first.');
     if (Number(currentUser.balance) < CARD_PRICE) return alert('Insufficient balance.');
-
     if (!confirm(`Join this round with card ${selectedNum} for ${CARD_PRICE} Birr?`)) return;
 
     const btn = $('playBtn');
     btn.disabled = true;
-
     try {
       const data = await api('/api/player/play', {
         method: 'POST',
@@ -234,8 +217,7 @@
     }
   }
 
-  const esc = (s) => String(s).replace(/[&<>"']/g, c =>
-    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
   async function loadHistory() {
     if (!currentUser) return;
@@ -243,25 +225,10 @@
       const data = await api(`/api/player/history/${currentUser.id}`);
       const list = $('historyList');
       const items = [];
-
-      data.transactions.forEach(t => {
-        items.push(`<li>
-          <span>${t.type === 'deposit' ? 'Deposit' : 'Withdraw'} ${Number(t.amount).toFixed(2)} Birr</span>
-          <span class="tag ${esc(t.status)}">${esc(t.status)}</span>
-        </li>`);
-      });
-
-      data.tickets.forEach(t => {
-        items.push(`<li>
-          <span>Card ${t.card_number} — round #${t.rounds ? t.rounds.id : '?'}</span>
-          <span class="tag">${t.rounds ? esc(t.rounds.status) : ''}</span>
-        </li>`);
-      });
-
+      data.transactions.forEach(t => items.push(`<li><span>${t.type === 'deposit' ? 'Deposit' : 'Withdraw'} ${Number(t.amount).toFixed(2)} Birr</span><span class="tag ${esc(t.status)}">${esc(t.status)}</span></li>`));
+      data.tickets.forEach(t => items.push(`<li><span>Card ${t.card_number} — round #${t.rounds ? t.rounds.id : '?'}</span><span class="tag">${t.rounds ? esc(t.rounds.status) : ''}</span></li>`));
       list.innerHTML = items.length ? items.join('') : '<li>No activity yet.</li>';
-    } catch (e) {
-      console.error(e);
-    }
+    } catch (e) { console.error(e); }
   }
 </script>
 </body>
