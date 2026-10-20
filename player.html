@@ -3,17 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>NUMBER</title>
+<title>Number</title>
 <style>
   :root { --bg: #12121f; --panel: #1e1e2f; --cell: #2a2a40; --accent: #2196F3; --green: #4CAF50; --red: #f44336; --text: #ffffff; --text-muted: #888; }
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
   body { background: var(--bg); color: var(--text); padding-bottom: 85px; }
   
-  .top-bar { background: var(--panel); padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-  .user-info { text-align: left; font-size: 14px; }
+  .top-bar { background: var(--panel); padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+  .user-info { text-align: left; font-size: 14px; flex: 1; }
   .user-info span { color: var(--text-muted); font-size: 12px; }
-  .balance-box { text-align: right; }
+  .balance-box { text-align: right; flex: 1; }
   .balance-box b { color: var(--green); font-size: 20px; }
+  
+  /* Language Toggle */
+  .lang-toggle { background: var(--cell); border: 1px solid #3b3b58; color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; margin: 0 10px; }
 
   .view { display: none; padding: 15px; max-width: 600px; margin: 0 auto; animation: fadeIn 0.3s ease; }
   .view.active { display: block; }
@@ -63,24 +66,31 @@
   .podium-phone { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
   .no-winner { color: var(--text-muted); font-style: italic; font-size: 13px; }
 
-  .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--panel); display: flex; justify-content: space-around; padding: 8px 5px 15px; border-top: 1px solid #2a2a40; z-index: 100; }
-  .nav-item { background: transparent; border: none; color: var(--text-muted); font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 12px; border-radius: 12px; margin: 0; width: auto; cursor: pointer; transition: 0.3s; font-weight: 600; }
+  .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--panel); display: flex; justify-content: space-around; padding: 8px 2px 15px; border-top: 1px solid #2a2a40; z-index: 100; }
+  .nav-item { background: transparent; border: none; color: var(--text-muted); font-size: 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 6px; border-radius: 12px; margin: 0; width: auto; cursor: pointer; transition: 0.3s; font-weight: 600; }
   .nav-item svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .nav-item.active { background: var(--accent); color: #fff; box-shadow: 0 4px 10px rgba(33, 150, 243, 0.4); }
 
   #loginScreen { display: flex; flex-direction: column; justify-content: center; height: 100vh; padding: 20px; max-width: 400px; margin: 0 auto; }
   .hidden { display: none !important; }
   .highlight { border: 2px solid var(--accent); box-shadow: 0 0 15px rgba(33, 150, 243, 0.5); transition: 0.3s; }
+
+  /* Rules List */
+  .rules-list { text-align: left; line-height: 1.6; font-size: 14px; color: #ccc; }
+  .rules-list li { margin-bottom: 12px; list-style-type: decimal; margin-left: 20px; }
 </style>
 </head>
 <body>
 
 <div id="loginScreen">
   <div class="panel" style="padding: 30px 20px;">
-    <h2 style="color: var(--accent); margin-bottom: 20px;">Number Drawn</h2>
-    <input type="text" id="name" placeholder="Full Name" autocomplete="name">
-    <input type="tel" id="phone" placeholder="Phone Number (09... or +251...)" autocomplete="tel">
-    <button onclick="login()" style="margin-top: 10px;">Login / Register</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+      <h2 style="color: var(--accent); margin: 0;" data-i18n="title">Number gaming</h2>
+      <button class="lang-toggle" onclick="toggleLanguage()" id="langToggleBtn">አማርኛ</button>
+    </div>
+    <input type="text" id="name" placeholder="Full Name" data-i18n-ph="fullName">
+    <input type="tel" id="phone" placeholder="Phone Number (09... or +251...)" data-i18n-ph="phone">
+    <button onclick="login()" style="margin-top: 10px;" data-i18n="loginBtn">Login / Register</button>
   </div>
 </div>
 
@@ -88,98 +98,118 @@
   
   <div class="top-bar">
     <div class="user-info">
-      <span>Welcome,</span><br>
+      <span data-i18n="welcome">Welcome,</span><br>
       <b id="userName" style="font-size: 16px;"></b>
     </div>
+    <button class="lang-toggle" onclick="toggleLanguage()" id="langToggleBtn2">አማርኛ</button>
     <div class="balance-box">
-      <span style="font-size: 12px; color: var(--text-muted);">Balance</span><br>
-      <b><span id="balance">0.00</span> Birr</b>
+      <span style="font-size: 12px; color: var(--text-muted);" data-i18n="balance">Balance</span><br>
+      <b><span id="balance">0.00</span> <span data-i18n="birr">Birr</span></b>
     </div>
   </div>
 
+  <!-- PLAY VIEW -->
   <div id="view-play" class="view active">
     <div class="quick-actions">
       <button class="quick-btn deposit" onclick="scrollToWallet('depositSection')">
         <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        Deposit
+        <span data-i18n="deposit">Deposit</span>
       </button>
       <button class="quick-btn withdraw" onclick="scrollToWallet('withdrawSection')">
         <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        Withdraw
+        <span data-i18n="withdraw">Withdraw</span>
       </button>
     </div>
 
     <div class="panel">
-      <h2>Select Cards (100 Birr Each)</h2>
+      <h2 data-i18n="selectCards">Select Cards (100 Birr Each)</h2>
       <p id="roundInfo" style="text-align: center; color: var(--text-muted); font-size: 13px; margin-bottom: 10px;"></p>
       <div class="grid" id="numberGrid"></div>
-      <p id="selectedInfo" style="text-align: center; color: var(--accent); font-weight: bold; margin-bottom: 10px; min-height: 20px;">No cards selected</p>
-      <button id="playBtn" class="btn-green" onclick="play()" disabled>Pay & Play</button>
+      <p id="selectedInfo" style="text-align: center; color: var(--accent); font-weight: bold; margin-bottom: 10px; min-height: 20px;" data-i18n="noCards">No cards selected</p>
+      <button id="playBtn" class="btn-green" onclick="play()" disabled data-i18n="payAndPlay">Pay & Play</button>
     </div>
   </div>
 
+  <!-- WINNERS VIEW -->
   <div id="view-winners" class="view">
     <div class="panel">
-      <h2>Winners & Results</h2>
+      <h2 data-i18n="winnersResults">Winners & Results</h2>
       <div id="winnersList">
-        <p style="text-align: center; color: var(--text-muted);">Loading results...</p>
+        <p style="text-align: center; color: var(--text-muted);" data-i18n="loading">Loading results...</p>
       </div>
     </div>
   </div>
 
+  <!-- ACTIVITY VIEW -->
   <div id="view-activity" class="view">
     <div class="panel">
-      <h2>My Activity (Last 10)</h2>
+      <h2 data-i18n="myActivity">My Activity (Last 10)</h2>
       <ul class="list" id="historyList">
-        <li><span style="color: var(--text-muted);">No recent activity.</span></li>
+        <li><span style="color: var(--text-muted);" data-i18n="noActivity">No recent activity.</span></li>
       </ul>
     </div>
   </div>
 
+  <!-- WALLET VIEW -->
   <div id="view-wallet" class="view">
     <div class="panel" id="depositSection">
-      <h2>💰 Deposit</h2>
+      <h2 data-i18n="depositTitle">💰 Deposit</h2>
       <div style="background: var(--cell); padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; border-left: 3px solid var(--green); line-height: 1.6;">
         <b>Telebirr:</b> 0912345678 <br>
-        <b>CBE:</b> 1000123456789
+        <b>CBE:</b> 1000123456789 
       </div>
-      <input type="number" id="depAmount" placeholder="Amount (Birr)" min="1">
+      <input type="number" id="depAmount" placeholder="Amount (Birr)" min="1" data-i18n-ph="amount">
       <select id="depMethod">
         <option value="telebirr">Telebirr</option>
         <option value="cbe">CBE</option>
       </select>
-      <input type="text" id="depProof" placeholder="Transaction ID / SMS Reference">
-      <button class="btn-green" onclick="handleDeposit()">Submit Deposit</button>
+      <input type="text" id="depProof" placeholder="Transaction ID / SMS Reference" data-i18n-ph="proof">
+      <button class="btn-green" onclick="handleDeposit()" data-i18n="submitDeposit">Submit Deposit</button>
     </div>
 
     <div class="panel" id="withdrawSection">
-      <h2>💸 Withdraw</h2>
-      <input type="number" id="withAmount" placeholder="Amount (Birr)" min="1">
+      <h2 data-i18n="withdrawTitle">💸 Withdraw</h2>
+      <input type="number" id="withAmount" placeholder="Amount (Birr)" min="1" data-i18n-ph="amount">
       <select id="withMethod">
         <option value="telebirr">Telebirr</option>
         <option value="cbe">CBE</option>
       </select>
-      <input type="text" id="withAccount" placeholder="Account Number / Phone Number">
-      <button class="btn-red" onclick="handleWithdraw()">Submit Withdraw</button>
+      <input type="text" id="withAccount" placeholder="Account Number / Phone Number" data-i18n-ph="account">
+      <button class="btn-red" onclick="handleWithdraw()" data-i18n="submitWithdraw">Submit Withdraw</button>
     </div>
   </div>
 
+  <!-- RULES VIEW -->
+  <div id="view-rules" class="view">
+    <div class="panel">
+      <h2 data-i18n="rulesTitle">Game Rules</h2>
+      <ul class="rules-list" id="rulesList">
+        <!-- Rules populated by JS -->
+      </ul>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAVIGATION -->
   <div class="bottom-nav">
     <button class="nav-item active" id="nav-play" onclick="switchView('play')">
       <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-      Play
+      <span data-i18n="navPlay">Play</span>
     </button>
     <button class="nav-item" id="nav-winners" onclick="switchView('winners')">
       <svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
-      Winners
+      <span data-i18n="navWinners">Winners</span>
     </button>
     <button class="nav-item" id="nav-activity" onclick="switchView('activity')">
       <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-      Activity
+      <span data-i18n="navActivity">Activity</span>
     </button>
     <button class="nav-item" id="nav-wallet" onclick="switchView('wallet')">
       <svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path></svg>
-      Wallet
+      <span data-i18n="navWallet">Wallet</span>
+    </button>
+    <button class="nav-item" id="nav-rules" onclick="switchView('rules')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+      <span data-i18n="navRules">Rules</span>
     </button>
   </div>
 
@@ -194,9 +224,194 @@
   let selectedNums = new Set();
   let takenNumbers = new Set();
   let pollTimer = null;
+  
+  // Translation State
+  let currentLang = localStorage.getItem('dotBingoLang') || 'en';
 
   const $ = (id) => document.getElementById(id);
 
+  // --- TRANSLATION DICTIONARY ---
+  const translations = {
+    en: {
+      title: "Dot Bingo",
+      fullName: "Full Name",
+      phone: "Phone Number (09... or +251...)",
+      loginBtn: "Login / Register",
+      welcome: "Welcome,",
+      balance: "Balance",
+      birr: "Birr",
+      deposit: "Deposit",
+      withdraw: "Withdraw",
+      selectCards: "Select Cards (100 Birr Each)",
+      noCards: "No cards selected",
+      payAndPlay: "Pay & Play",
+      winnersResults: "Winners & Results",
+      loading: "Loading results...",
+      myActivity: "My Activity (Last 10)",
+      noActivity: "No recent activity.",
+      depositTitle: "💰 Deposit",
+      amount: "Amount (Birr)",
+      proof: "Transaction ID / SMS Reference",
+      submitDeposit: "Submit Deposit",
+      withdrawTitle: "💸 Withdraw",
+      account: "Account Number / Phone Number",
+      submitWithdraw: "Submit Withdraw",
+      rulesTitle: "Game Rules",
+      navPlay: "Play",
+      navWinners: "Winners",
+      navActivity: "Activity",
+      navWallet: "Wallet",
+      navRules: "Rules",
+      
+      // Dynamic Strings
+      round: "Round",
+      cardsSold: "Cards Sold",
+      noActiveRound: "No active round. Buy a card to start!",
+      selected: "card(s) selected:",
+      need: "Need",
+      processing: "Processing...",
+      joinPrompt: "Join round with",
+      joinPrompt2: "card(s) for",
+      players: "Players",
+      pool: "Pool",
+      firstPlace: "1st Place (60%)",
+      secondPlace: "2nd Place (10%)",
+      thirdPlace: "3rd Place (5%)",
+      noWinner: "No Winner",
+      noRounds: "No finished rounds yet.",
+      errorLoading: "Error loading winners:",
+      noCards2: "No cards selected",
+      
+      // History & Transactions
+      depositTxt: "Deposit",
+      withdrawTxt: "Withdraw",
+      card: "Card",
+      roundTxt: "round",
+      
+      // Rules
+      rule1: "1. Each card costs 100 Birr.",
+      rule2: "2. You can select and buy multiple cards in a single round.",
+      rule3: "3. Winners are drawn randomly from the purchased cards only.",
+      rule4: "4. Prize Pool Distribution: 60% for 1st Place, 10% for 2nd Place, 5% for 3rd Place.",
+      rule5: "5. Deposits require a valid SMS transaction reference and are approved by an admin.",
+      rule6: "6. Withdrawals are processed by the admin to the account details you provide."
+    },
+    am: {
+      title: "ዶት ቢንጎ",
+      fullName: "ሙሉ ስም",
+      phone: "የስልክ ቁጥር (09... ወይም +251...)",
+      loginBtn: "ይግቡ / ይመዝገቡ",
+      welcome: "እንኳን ደህና መጡ፣",
+      balance: "ቀሪ ሂሳብ",
+      birr: "ብር",
+      deposit: "ገቢ ማድረግ",
+      withdraw: "ገንዘብ ማውጣት",
+      selectCards: "ካርዶችን ይምረጡ (እያንዳንዱ 100 ብር)",
+      noCards: "ምንም ካርድ አልመረጡም",
+      payAndPlay: "ይክፈሉ እና ይጫወቱ",
+      winnersResults: "አሸናፊዎች እና ውጤቶች",
+      loading: "ውጤቶች በመጫን ላይ...",
+      myActivity: "የእኔ እንቅስቃሴ (የመጨረሻዎቹ 10)",
+      noActivity: "ከቅርብ ጊዜ ጀምሮ እንቅስቃሴ የለም።",
+      depositTitle: "💰 ገቢ ማድረግ",
+      amount: "መጠን (ብር)",
+      proof: "የግብይት መለያ / የSMS ማጣቀሻ",
+      submitDeposit: "ገቢ አስገባ",
+      withdrawTitle: "💸 ገንዘብ ማውጣት",
+      account: "የሂሳብ ቁጥር / የስልክ ቁጥር",
+      submitWithdraw: "ማውጣት አስገባ",
+      rulesTitle: "የጨዋታ ደንቦች",
+      navPlay: "ተጫወት",
+      navWinners: "አሸናፊዎች",
+      navActivity: "እንቅስቃሴ",
+      navWallet: "ቦርሳ",
+      navRules: "ደንቦች",
+      
+      // Dynamic Strings
+      round: "ዙር",
+      cardsSold: "ካርዶች ተሽጠዋል",
+      noActiveRound: "ንቁ ዙር የለም። ለመጀመር ካርድ ይግዙ!",
+      selected: "ካርድ(ዎች) ተመርጠዋል:",
+      need: "ያስፈልጋል",
+      processing: "በሂደት ላይ...",
+      joinPrompt: "ዙሩን ይቀላቀሉ ከ",
+      joinPrompt2: "ካርድ(ዎች) ጋር በ",
+      players: "ተጫዋቾች",
+      pool: "ጠቅላላ ሽልማት",
+      firstPlace: "1ኛ ደረጃ (60%)",
+      secondPlace: "2ኛ ደረጃ (10%)",
+      thirdPlace: "3ኛ ደረጃ (5%)",
+      noWinner: "አሸናፊ የለም",
+      noRounds: "እስካሁን የተጠናቀቀ ዙር የለም።",
+      errorLoading: "አሸናፊዎችን በመጫን ላይ ስህተት ተከስቷል:",
+      noCards2: "ምንም ካርድ አልመረጡም",
+      
+      // History & Transactions
+      depositTxt: "ገቢ",
+      withdrawTxt: "ወጪ",
+      card: "ካርድ",
+      roundTxt: "ዙር",
+      
+      // Rules
+      rule1: "1. እያንዳንዱ ካርድ 100 ብር ያስከፍላል።",
+      rule2: "2. በአንድ ዙር ውስጥ ብዙ ካርዶችን መምረጥ እና መግዛት ይችላሉ።",
+      rule3: "3. አሸናፊዎች የሚመረጡት ከተገዙት ካርዶች መካከል በዘፈቀደ ነው።",
+      rule4: "4. የሽልማት ክፍፍል፡ 60% ለ1ኛ ደረጃ፣ 10% ለ2ኛ ደረጃ፣ 5% ለ3ኛ ደረጃ።",
+      rule5: "5. ገቢ ለማድረግ ትክክለኛ የSMS የግብይት ማጣቀሻ ያስፈልጋል እና በአስተዳዳሪ ይፈቀዳል።",
+      rule6: "6. ገንዘብ ማውጣት በአስተዳዳሪ በኩል በሰጡት የሂሳብ ዝርዝር መሰረት ይከናወናል።"
+    }
+  };
+
+  // --- LANGUAGE FUNCTIONS ---
+  function toggleLanguage() {
+    currentLang = currentLang === 'en' ? 'am' : 'en';
+    localStorage.setItem('dotBingoLang', currentLang);
+    applyTranslations();
+  }
+
+  function applyTranslations() {
+    const t = translations[currentLang];
+    
+    // Toggle button text
+    const btnText = currentLang === 'en' ? 'አማርኛ' : 'English';
+    if($('langToggleBtn')) $('langToggleBtn').textContent = btnText;
+    if($('langToggleBtn2')) $('langToggleBtn2').textContent = btnText;
+
+    // Translate standard text elements
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (t[key]) el.textContent = t[key];
+    });
+
+    // Translate placeholders
+    document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+      const key = el.getAttribute('data-i18n-ph');
+      if (t[key]) el.placeholder = t[key];
+    });
+
+    // Translate Rules List
+    const rulesList = $('rulesList');
+    if (rulesList) {
+      rulesList.innerHTML = `
+        <li>${t.rule1}</li>
+        <li>${t.rule2}</li>
+        <li>${t.rule3}</li>
+        <li>${t.rule4}</li>
+        <li>${t.rule5}</li>
+        <li>${t.rule6}</li>
+      `;
+    }
+
+    // Refresh dynamic text
+    updatePlayButton();
+    if (currentUser) {
+      refresh();
+      loadHistory();
+      loadWinners();
+    }
+  }
+
+  // --- API HELPER ---
   async function api(path, options = {}) {
     const res = await fetch(API + path, {
       ...options,
@@ -224,6 +439,7 @@
     setTimeout(() => sec.classList.remove('highlight'), 2000);
   }
 
+  // --- GAME LOGIC ---
   const grid = $('numberGrid');
   for (let i = 1; i <= 100; i++) {
     const cell = document.createElement('div');
@@ -235,7 +451,10 @@
   }
 
   function selectNumber(n) {
-    if (takenNumbers.has(n)) return alert('That card is already taken.');
+    if (takenNumbers.has(n)) {
+      const t = translations[currentLang];
+      return alert(t.noCards); // Using a generic alert, could be specific
+    }
 
     if (selectedNums.has(n)) {
       selectedNums.delete(n);
@@ -249,29 +468,32 @@
   }
 
   function updatePlayButton() {
+    const t = translations[currentLang];
     const count = selectedNums.size;
     const totalCost = count * CARD_PRICE;
     const btn = $('playBtn');
+    const info = $('selectedInfo');
 
     if (count === 0) {
-      $('selectedInfo').textContent = 'No cards selected';
-      btn.textContent = 'Pay & Play';
+      info.textContent = t.noCards2;
+      btn.textContent = t.payAndPlay;
       btn.disabled = true;
       return;
     }
 
-    $('selectedInfo').textContent = `${count} card(s) selected: ${Array.from(selectedNums).join(', ')}`;
-    btn.textContent = `Pay ${totalCost} Birr & Play`;
+    info.textContent = `${count} ${t.selected} ${Array.from(selectedNums).join(', ')}`;
+    btn.textContent = `${t.payAndPlay} (${totalCost} ${t.birr})`;
 
     if (!currentUser || Number(currentUser.balance) < totalCost) {
       btn.disabled = true;
-      btn.textContent = `Need ${totalCost} Birr`;
+      btn.textContent = `${t.need} ${totalCost} ${t.birr}`;
     } else {
       btn.disabled = false;
     }
   }
 
   function renderRound(round, taken) {
+    const t = translations[currentLang];
     takenNumbers = new Set((taken || []).map(Number));
     
     let changed = false;
@@ -289,13 +511,19 @@
       if (takenNumbers.has(n)) el.classList.remove('selected');
     });
     
-    $('roundInfo').textContent = round ? `Round #${round.id} — ${takenNumbers.size}/100 Cards Sold` : 'No active round. Buy a card to start!';
+    $('roundInfo').textContent = round 
+      ? `${t.round} #${round.id} — ${takenNumbers.size}/100 ${t.cardsSold}` 
+      : t.noActiveRound;
   }
 
+  // --- AUTHENTICATION ---
   async function login() {
     const name = $('name').value.trim();
     const phone = $('phone').value.trim();
-    if (!name || !phone) return alert('Fill in all fields.');
+    const t = translations[currentLang];
+    
+    if (!name || !phone) return alert('Fill in all fields.'); // Keep English for error fallback
+    
     try {
       currentUser = await api('/api/player/login', { method: 'POST', body: JSON.stringify({ name, phone }) });
     } catch (e) { return alert(e.message); }
@@ -320,6 +548,7 @@
     } catch (e) { console.error(e); }
   }
 
+  // --- TRANSACTIONS ---
   async function handleDeposit() {
     const amount = Number($('depAmount').value);
     const method = $('depMethod').value;
@@ -348,16 +577,20 @@
     } catch (e) { alert(e.message); }
   }
 
+  // --- PLAY GAME ---
   async function play() {
+    const t = translations[currentLang];
     if (selectedNums.size === 0) return;
+    
     const count = selectedNums.size;
     const totalCost = count * CARD_PRICE;
-    if (Number(currentUser.balance) < totalCost) return alert('Insufficient balance.');
-    if (!confirm(`Join round with ${count} card(s) for ${totalCost} Birr?\n\nCards: ${Array.from(selectedNums).join(', ')}`)) return;
+    
+    if (Number(currentUser.balance) < totalCost) return alert(`${t.need} ${totalCost} ${t.birr}`);
+    if (!confirm(`${t.joinPrompt} ${count} ${t.joinPrompt2} ${totalCost} ${t.birr}?\n\n${Array.from(selectedNums).join(', ')}`)) return;
 
     const btn = $('playBtn');
     btn.disabled = true;
-    btn.textContent = 'Processing...';
+    btn.textContent = t.processing;
 
     try {
       const data = await api('/api/player/play', { 
@@ -384,42 +617,43 @@
 
   const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
+  // --- DATA LOADERS ---
   async function loadHistory() {
     if (!currentUser) return;
+    const t = translations[currentLang];
     try {
       const data = await api(`/api/player/history/${currentUser.id}`);
       const list = $('historyList');
       
-      // Combine transactions and tickets, then sort by date
       let combined = [
-        ...data.transactions.map(t => ({ ...t, itemType: 'transaction' })),
-        ...data.tickets.map(t => ({ ...t, itemType: 'ticket' }))
+        ...data.transactions.map(tx => ({ ...tx, itemType: 'transaction' })),
+        ...data.tickets.map(tk => ({ ...tk, itemType: 'ticket' }))
       ];
       
       combined.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-      
-      // Strictly limit to the last 10 items
       combined = combined.slice(0, 10);
 
       const items = [];
       combined.forEach(item => {
         if (item.itemType === 'transaction') {
-          items.push(`<li><span>${item.type === 'deposit' ? 'Deposit' : 'Withdraw'} ${Number(item.amount).toFixed(2)} Birr</span><span class="tag ${esc(item.status)}">${esc(item.status)}</span></li>`);
+          const typeTxt = item.type === 'deposit' ? t.depositTxt : t.withdrawTxt;
+          items.push(`<li><span>${typeTxt} ${Number(item.amount).toFixed(2)} ${t.birr}</span><span class="tag ${esc(item.status)}">${esc(item.status)}</span></li>`);
         } else {
-          items.push(`<li><span>Card ${item.card_number} — round #${item.rounds ? item.rounds.id : '?'}</span><span class="tag">${item.rounds ? esc(item.rounds.status) : ''}</span></li>`);
+          items.push(`<li><span>${t.card} ${item.card_number} — ${t.roundTxt} #${item.rounds ? item.rounds.id : '?'}</span><span class="tag">${item.rounds ? esc(item.rounds.status) : ''}</span></li>`);
         }
       });
       
-      list.innerHTML = items.length ? items.join('') : '<li><span style="color: var(--text-muted);">No recent activity.</span></li>';
+      list.innerHTML = items.length ? items.join('') : `<li><span style="color: var(--text-muted);">${t.noActivity}</span></li>`;
     } catch (e) { console.error(e); }
   }
 
   async function loadWinners() {
+    const t = translations[currentLang];
     const list = $('winnersList');
     try {
       const data = await api('/api/player/winners');
       if (!data || !data.length) {
-        return list.innerHTML = '<p style="text-align: center; color: var(--text-muted);">No finished rounds yet.</p>';
+        return list.innerHTML = `<p style="text-align: center; color: var(--text-muted);">${t.noRounds}</p>`;
       }
 
       list.innerHTML = data.map(round => {
@@ -436,56 +670,58 @@
 
         return `
           <div style="margin-bottom: 25px; background: #1e1e2f; border-radius: 10px; padding: 15px; border: 1px solid #3b3b58;">
-            <h4 style="margin-bottom: 5px; font-size: 16px; text-align: center; color: var(--accent);">Round #${round.round_id}</h4>
-            <p style="text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 15px;">${round.total_players} Players • Pool: ${(round.total_players * 100).toFixed(0)} Birr</p>
+            <h4 style="margin-bottom: 5px; font-size: 16px; text-align: center; color: var(--accent);">${t.round} #${round.round_id}</h4>
+            <p style="text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 15px;">${round.total_players} ${t.players} • ${t.pool}: ${(round.total_players * 100).toFixed(0)} ${t.birr}</p>
             
             <div class="podium-item podium-1">
               <div class="podium-left">
-                <span class="podium-place">🥇 1st Place (60%)</span>
-                <span class="podium-num">Number ${round.draw_1 || '-'}</span>
+                <span class="podium-place">🥇 ${t.firstPlace}</span>
+                <span class="podium-num">${t.card} ${round.draw_1 || '-'}</span>
               </div>
               <div class="podium-right">
                 ${w1 
-                  ? `<div class="podium-winner">${round.prizes.p1.toFixed(2)} Birr</div>
+                  ? `<div class="podium-winner">${round.prizes.p1.toFixed(2)} ${t.birr}</div>
                      <div class="podium-phone">${esc(w1.name)}<br>${esc(w1.phone)}</div>` 
-                  : `<span class="no-winner">No Winner</span>`}
+                  : `<span class="no-winner">${t.noWinner}</span>`}
               </div>
             </div>
 
             <div class="podium-item podium-2">
               <div class="podium-left">
-                <span class="podium-place">🥈 2nd Place (10%)</span>
-                <span class="podium-num">Number ${round.draw_2 || '-'}</span>
+                <span class="podium-place">🥈 ${t.secondPlace}</span>
+                <span class="podium-num">${t.card} ${round.draw_2 || '-'}</span>
               </div>
               <div class="podium-right">
                 ${w2 
-                  ? `<div class="podium-winner">${round.prizes.p2.toFixed(2)} Birr</div>
+                  ? `<div class="podium-winner">${round.prizes.p2.toFixed(2)} ${t.birr}</div>
                      <div class="podium-phone">${esc(w2.name)}<br>${esc(w2.phone)}</div>` 
-                  : `<span class="no-winner">No Winner</span>`}
+                  : `<span class="no-winner">${t.noWinner}</span>`}
               </div>
             </div>
 
             <div class="podium-item podium-3">
               <div class="podium-left">
-                <span class="podium-place">🥉 3rd Place (5%)</span>
-                <span class="podium-num">Number ${round.draw_3 || '-'}</span>
+                <span class="podium-place">🥉 ${t.thirdPlace}</span>
+                <span class="podium-num">${t.card} ${round.draw_3 || '-'}</span>
               </div>
               <div class="podium-right">
                 ${w3 
-                  ? `<div class="podium-winner">${round.prizes.p3.toFixed(2)} Birr</div>
+                  ? `<div class="podium-winner">${round.prizes.p3.toFixed(2)} ${t.birr}</div>
                      <div class="podium-phone">${esc(w3.name)}<br>${esc(w3.phone)}</div>` 
-                  : `<span class="no-winner">No Winner</span>`}
+                  : `<span class="no-winner">${t.noWinner}</span>`}
               </div>
             </div>
-
           </div>
         `;
       }).join('');
     } catch (e) { 
       console.error(e); 
-      list.innerHTML = `<p style="text-align: center; color: var(--red); padding: 10px;">Error loading winners: ${e.message}</p>`; 
+      list.innerHTML = `<p style="text-align: center; color: var(--red); padding: 10px;">${t.errorLoading} ${e.message}</p>`; 
     }
   }
+
+  // Initialize translations on load
+  applyTranslations();
 </script>
 </body>
 </html>
