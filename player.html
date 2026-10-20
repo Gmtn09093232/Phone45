@@ -9,14 +9,14 @@
     --bg: #12121f; 
     --panel: #1e1e2f; 
     --cell: #2a2a40; 
-    --accent: #2196F3; /* Blue highlight from your image */
+    --accent: #2196F3; /* Blue highlight */
     --green: #4CAF50; 
     --red: #f44336;
     --text: #ffffff;
     --text-muted: #888;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-  body { background: var(--bg); color: var(--text); padding-bottom: 70px; /* Space for bottom nav */ }
+  body { background: var(--bg); color: var(--text); padding-bottom: 80px; /* Space for bottom nav */ }
   
   /* Top Header */
   .top-bar { 
@@ -44,6 +44,18 @@
   .panel { background: var(--panel); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
   h2 { font-size: 18px; margin-bottom: 15px; text-align: center; color: #fff; }
   h3 { font-size: 14px; color: var(--text-muted); margin: 10px 0 5px; }
+
+  /* Quick Actions (Deposit / Withdraw Buttons on Play Screen) */
+  .quick-actions { display: flex; gap: 10px; margin-bottom: 15px; }
+  .quick-btn {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 12px; border-radius: 8px; border: none; font-weight: bold; font-size: 14px;
+    cursor: pointer; transition: 0.2s; color: #fff;
+  }
+  .quick-btn.deposit { background: rgba(76, 175, 80, 0.15); color: var(--green); border: 1px solid var(--green); }
+  .quick-btn.withdraw { background: rgba(244, 67, 54, 0.15); color: var(--red); border: 1px solid var(--red); }
+  .quick-btn:active { transform: scale(0.97); }
+  .quick-btn svg { width: 18px; height: 18px; }
 
   /* Inputs & Buttons */
   input, select, button { padding: 14px; margin-bottom: 10px; border-radius: 8px; border: none; width: 100%; font-size: 15px; }
@@ -77,25 +89,24 @@
   .bottom-nav {
     position: fixed; bottom: 0; left: 0; width: 100%;
     background: var(--panel); display: flex; justify-content: space-around;
-    padding: 10px 5px 15px; /* Safe area for iPhones */
-    border-top: 1px solid #2a2a40; z-index: 100;
+    padding: 10px 5px 15px; border-top: 1px solid #2a2a40; z-index: 100;
   }
   .nav-item {
     background: transparent; border: none; color: var(--text-muted);
-    font-size: 12px; display: flex; flex-direction: column; align-items: center;
-    gap: 4px; padding: 8px 15px; border-radius: 12px; margin: 0; width: auto;
-    cursor: pointer; transition: 0.3s;
+    font-size: 11px; display: flex; flex-direction: column; align-items: center;
+    gap: 4px; padding: 8px 12px; border-radius: 12px; margin: 0; width: auto;
+    cursor: pointer; transition: 0.3s; font-weight: 600;
   }
-  .nav-item .icon { font-size: 20px; }
-  /* Blue pill active state exactly like your screenshot */
+  .nav-item svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  /* Blue pill active state */
   .nav-item.active { background: var(--accent); color: #fff; box-shadow: 0 4px 10px rgba(33, 150, 243, 0.4); }
 
   /* Login Screen */
   #loginScreen { display: flex; flex-direction: column; justify-content: center; height: 100vh; padding: 20px; max-width: 400px; margin: 0 auto; }
   .hidden { display: none !important; }
   
-  /* Highlight Deposit Effect */
-  .highlight { border: 2px solid var(--accent); box-shadow: 0 0 15px rgba(33, 150, 243, 0.5); }
+  /* Highlight Effect for scrolling from quick actions */
+  .highlight { border: 2px solid var(--accent); box-shadow: 0 0 15px rgba(33, 150, 243, 0.5); transition: 0.3s; }
 </style>
 </head>
 <body>
@@ -127,6 +138,19 @@
 
   <!-- 1. PLAY VIEW -->
   <div id="view-play" class="view active">
+    
+    <!-- Quick Actions (Top of Playing Section) -->
+    <div class="quick-actions">
+      <button class="quick-btn deposit" onclick="scrollToWallet('depositSection')">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Deposit
+      </button>
+      <button class="quick-btn withdraw" onclick="scrollToWallet('withdrawSection')">
+        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Withdraw
+      </button>
+    </div>
+
     <div class="panel">
       <h2>Select Card (100 Birr)</h2>
       <p id="roundInfo" style="text-align: center; color: var(--text-muted); font-size: 13px; margin-bottom: 10px;"></p>
@@ -142,7 +166,7 @@
   <!-- 2. WINNERS VIEW -->
   <div id="view-winners" class="view">
     <div class="panel">
-      <h2>🏆 Winners & Results</h2>
+      <h2>Winners & Results</h2>
       <div id="winnersList">
         <p style="text-align: center; color: var(--text-muted);">Loading results...</p>
       </div>
@@ -152,7 +176,7 @@
   <!-- 3. ACTIVITY VIEW -->
   <div id="view-activity" class="view">
     <div class="panel">
-      <h2>📋 My Activity</h2>
+      <h2>My Activity</h2>
       <ul class="list" id="historyList">
         <li><span style="color: var(--text-muted);">No recent activity.</span></li>
       </ul>
@@ -165,7 +189,7 @@
     <!-- Deposit Section -->
     <div class="panel" id="depositSection">
       <h2>💰 Deposit</h2>
-      <div style="background: var(--cell); padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 10px; border-left: 3px solid var(--accent);">
+      <div style="background: var(--cell); padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 10px; border-left: 3px solid var(--green);">
         <b>Telebirr:</b> 0912345678 (Dot Bingo)<br>
         <b>CBE:</b> 1000123456789 (Dot Bingo)
       </div>
@@ -192,19 +216,23 @@
 
   </div>
 
-  <!-- BOTTOM NAVIGATION BAR -->
+  <!-- BOTTOM NAVIGATION BAR (SVG Icons) -->
   <div class="bottom-nav">
     <button class="nav-item active" id="nav-play" onclick="switchView('play')">
-      <span class="icon">🎮</span> Play
+      <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+      Play
     </button>
     <button class="nav-item" id="nav-winners" onclick="switchView('winners')">
-      <span class="icon">🏆</span> Winners
+      <svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+      Winners
     </button>
     <button class="nav-item" id="nav-activity" onclick="switchView('activity')">
-      <span class="icon">📋</span> Activity
+      <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+      Activity
     </button>
     <button class="nav-item" id="nav-wallet" onclick="switchView('wallet')">
-      <span class="icon">💳</span> Wallet
+      <svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path></svg>
+      Wallet
     </button>
   </div>
 
@@ -237,7 +265,7 @@
 
   // --- UI NAVIGATION LOGIC ---
   function switchView(viewName) {
-    // Hide all views
+    // Hide all views & remove active state from nav
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     
@@ -248,6 +276,15 @@
     // Refresh specific data when opening tabs
     if (viewName === 'winners') loadWinners();
     if (viewName === 'activity') loadHistory();
+  }
+
+  // Scrolls from Play tab to Wallet tab & highlights section
+  function scrollToWallet(sectionId) {
+    switchView('wallet');
+    const sec = $(sectionId);
+    sec.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    sec.classList.add('highlight');
+    setTimeout(() => sec.classList.remove('highlight'), 2000);
   }
 
   // Build Number Grid
@@ -267,11 +304,7 @@
       alert(`Insufficient balance. You need ${CARD_PRICE} Birr.`);
       
       // Auto-switch to Wallet and highlight Deposit
-      switchView('wallet');
-      const depSec = $('depositSection');
-      depSec.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      depSec.classList.add('highlight');
-      setTimeout(() => depSec.classList.remove('highlight'), 3000);
+      scrollToWallet('depositSection');
       return;
     }
     selectedNum = n;
