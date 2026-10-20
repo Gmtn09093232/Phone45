@@ -2,78 +2,170 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dot Bingo — Player</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Dot Bingo</title>
 <style>
-  :root { --bg:#1e1e2f; --panel:#2a2a40; --cell:#3b3b58; --accent:#FF9800; --green:#4CAF50; --blue:#2196F3; --red:#f44336; }
-  * { box-sizing: border-box; }
-  body { font-family: system-ui, sans-serif; background: var(--bg); color:#fff; padding:15px; text-align:center; margin:0; }
+  :root { 
+    --bg: #12121f; 
+    --panel: #1e1e2f; 
+    --cell: #2a2a40; 
+    --accent: #2196F3; /* Blue highlight from your image */
+    --green: #4CAF50; 
+    --red: #f44336;
+    --text: #ffffff;
+    --text-muted: #888;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+  body { background: var(--bg); color: var(--text); padding-bottom: 70px; /* Space for bottom nav */ }
   
-  /* Collapsible Accordion Styles */
-  details { background: var(--panel); border-radius: 10px; max-width: 520px; margin: 0 auto 15px; overflow: hidden; transition: all 0.3s ease; }
-  summary { padding: 15px; font-weight: bold; font-size: 18px; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; user-select: none; }
-  summary::-webkit-details-marker { display: none; }
-  summary::after { content: '▼'; font-size: 12px; color: #aaa; transition: transform 0.3s; }
-  details[open] summary::after { transform: rotate(-180deg); }
-  .content { padding: 0 20px 20px; text-align: center; border-top: 1px solid #3b3b58; padding-top: 15px; }
-  
-  /* Inputs and Buttons */
-  input, select, button { padding:12px; margin:6px 0; border-radius:6px; border:none; width:100%; font-size:15px; }
-  input, select { background:#1b1b2b; color:#fff; border: 1px solid #3b3b58; }
-  button { background: var(--green); color:#fff; cursor:pointer; font-weight:bold; }
-  button:disabled { background: gray; cursor: not-allowed; }
-  .btn-blue { background: var(--blue); }
+  /* Top Header */
+  .top-bar { 
+    background: var(--panel); 
+    padding: 15px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+  .user-info { text-align: left; font-size: 14px; }
+  .user-info span { color: var(--text-muted); font-size: 12px; }
+  .balance-box { text-align: right; }
+  .balance-box b { color: var(--green); font-size: 20px; }
+
+  /* Views */
+  .view { display: none; padding: 15px; max-width: 600px; margin: 0 auto; animation: fadeIn 0.3s ease; }
+  .view.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Panels */
+  .panel { background: var(--panel); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+  h2 { font-size: 18px; margin-bottom: 15px; text-align: center; color: #fff; }
+  h3 { font-size: 14px; color: var(--text-muted); margin: 10px 0 5px; }
+
+  /* Inputs & Buttons */
+  input, select, button { padding: 14px; margin-bottom: 10px; border-radius: 8px; border: none; width: 100%; font-size: 15px; }
+  input, select { background: var(--cell); color: #fff; border: 1px solid #3b3b58; }
+  button { background: var(--accent); color: #fff; cursor: pointer; font-weight: bold; transition: 0.2s; }
+  button:active { opacity: 0.8; transform: scale(0.98); }
+  button:disabled { background: #444; color: #888; cursor: not-allowed; transform: none; }
+  .btn-green { background: var(--green); }
   .btn-red { background: var(--red); }
-  .row { display:flex; gap:10px; }
-  .row > button { flex:1; }
-  
+
   /* Game Grid */
-  .grid { display:grid; grid-template-columns: repeat(10, 1fr); gap:4px; margin-top:15px; }
-  .num { background: var(--cell); padding:10px 0; cursor:pointer; border-radius:4px; font-size:13px; user-select:none; }
-  .num.selected { background: var(--accent); color:#000; font-weight:bold; }
-  .num.taken { background:#232338; color:#555; cursor:not-allowed; text-decoration: line-through; }
+  .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; margin-bottom: 15px; }
+  .num { background: var(--cell); padding: 10px 0; cursor: pointer; border-radius: 6px; font-size: 13px; text-align: center; user-select: none; transition: 0.1s; }
+  .num.selected { background: var(--accent); color: #fff; font-weight: bold; box-shadow: 0 0 8px rgba(33, 150, 243, 0.5); }
+  .num.taken { background: #1a1a2e; color: #444; cursor: not-allowed; text-decoration: line-through; }
   
-  /* Specific UI */
-  #balance { color: var(--green); font-size:28px; font-weight:bold; margin: 5px 0; }
-  .hidden { display:none; }
-  .highlight-deposit { border: 2px solid var(--accent); box-shadow: 0 0 15px rgba(255,152,0,.5); }
-  .info-box { background: #1b1b2b; padding: 10px; border-radius: 5px; border-left: 3px solid var(--accent); text-align: left; margin: 10px 0; font-size: 14px; }
+  /* Lists */
+  ul.list { list-style: none; width: 100%; }
+  ul.list li { padding: 12px 0; border-bottom: 1px solid var(--cell); display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+  ul.list li:last-child { border-bottom: none; }
+  .tag { font-size: 11px; padding: 4px 8px; border-radius: 6px; background: var(--cell); font-weight: bold; }
+  .tag.approved { background: #2e7d32; color: #fff; }
+  .tag.rejected { background: #c62828; color: #fff; }
+  .tag.pending  { background: #f57c00; color: #fff; }
+
+  /* Winners Balls */
+  .win-balls { display: flex; justify-content: center; gap: 10px; margin: 10px 0; }
+  .ball { width: 45px; height: 45px; background: var(--accent); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; box-shadow: 0 4px 10px rgba(33, 150, 243, 0.4); }
+
+  /* Bottom Navigation Bar */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; width: 100%;
+    background: var(--panel); display: flex; justify-content: space-around;
+    padding: 10px 5px 15px; /* Safe area for iPhones */
+    border-top: 1px solid #2a2a40; z-index: 100;
+  }
+  .nav-item {
+    background: transparent; border: none; color: var(--text-muted);
+    font-size: 12px; display: flex; flex-direction: column; align-items: center;
+    gap: 4px; padding: 8px 15px; border-radius: 12px; margin: 0; width: auto;
+    cursor: pointer; transition: 0.3s;
+  }
+  .nav-item .icon { font-size: 20px; }
+  /* Blue pill active state exactly like your screenshot */
+  .nav-item.active { background: var(--accent); color: #fff; box-shadow: 0 4px 10px rgba(33, 150, 243, 0.4); }
+
+  /* Login Screen */
+  #loginScreen { display: flex; flex-direction: column; justify-content: center; height: 100vh; padding: 20px; max-width: 400px; margin: 0 auto; }
+  .hidden { display: none !important; }
   
-  /* History & Winners List */
-  ul.list { list-style:none; padding:0; margin:0; text-align:left; font-size:14px; }
-  ul.list li { padding:8px 0; border-bottom:1px solid #3a3a55; display:flex; justify-content:space-between; align-items:center; gap:8px; }
-  .tag { font-size:11px; padding:3px 6px; border-radius:4px; background:#3b3b58; white-space:nowrap; }
-  .tag.approved { background:#2e7d32; }
-  .tag.rejected { background:#c62828; }
-  .tag.pending  { background:#6d4c41; }
-  .win-balls { display: flex; justify-content: center; gap: 10px; margin: 15px 0; }
-  .ball { width: 40px; height: 40px; background: var(--accent); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; }
+  /* Highlight Deposit Effect */
+  .highlight { border: 2px solid var(--accent); box-shadow: 0 0 15px rgba(33, 150, 243, 0.5); }
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
-<div class="panel" id="loginPanel" style="background:var(--panel); padding:20px; border-radius:10px; max-width:520px; margin:0 auto 20px;">
-  <h2>Player Login</h2>
-  <input type="text" id="name" placeholder="Full Name" autocomplete="name">
-  <input type="tel" id="phone" placeholder="Phone Number (09... or +251...)" autocomplete="tel">
-  <button onclick="login()">Login / Register</button>
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <div class="panel" style="padding: 30px 20px;">
+    <h2 style="color: var(--accent); margin-bottom: 20px;">Dot Bingo</h2>
+    <input type="text" id="name" placeholder="Full Name" autocomplete="name">
+    <input type="tel" id="phone" placeholder="Phone Number (09... or +251...)" autocomplete="tel">
+    <button onclick="login()" style="margin-top: 10px;">Login / Register</button>
+  </div>
 </div>
 
-<!-- MAIN GAME AREA -->
-<div id="gamePanel" class="hidden">
+<!-- MAIN APP -->
+<div id="appScreen" class="hidden">
   
-  <!-- 1. BALANCE -->
-  <div style="max-width:520px; margin: 0 auto 15px; background: var(--panel); border-radius: 10px; padding: 15px;">
-    <h2 style="margin:0; font-size:16px; color:#aaa;">Welcome, <span id="userName" style="color:#fff;"></span></h2>
-    <div>Balance: <span id="balance">0.00</span> Birr</div>
+  <!-- TOP HEADER -->
+  <div class="top-bar">
+    <div class="user-info">
+      <span>Welcome,</span><br>
+      <b id="userName" style="font-size: 16px;"></b>
+    </div>
+    <div class="balance-box">
+      <span style="font-size: 12px; color: var(--text-muted);">Balance</span><br>
+      <b><span id="balance">0.00</span> Birr</b>
+    </div>
   </div>
 
-  <!-- 2. DEPOSIT (Collapsible) -->
-  <details id="depositAcc">
-    <summary style="color: var(--green)">💰 Request Deposit</summary>
-    <div class="content">
-      <div class="info-box">
+  <!-- 1. PLAY VIEW -->
+  <div id="view-play" class="view active">
+    <div class="panel">
+      <h2>Select Card (100 Birr)</h2>
+      <p id="roundInfo" style="text-align: center; color: var(--text-muted); font-size: 13px; margin-bottom: 10px;"></p>
+      
+      <div class="grid" id="numberGrid"></div>
+      
+      <p id="selectedInfo" style="text-align: center; color: var(--accent); font-weight: bold; margin-bottom: 10px; min-height: 20px;"></p>
+      
+      <button id="playBtn" class="btn-green" onclick="play()" disabled>Pay & Play</button>
+    </div>
+  </div>
+
+  <!-- 2. WINNERS VIEW -->
+  <div id="view-winners" class="view">
+    <div class="panel">
+      <h2>🏆 Winners & Results</h2>
+      <div id="winnersList">
+        <p style="text-align: center; color: var(--text-muted);">Loading results...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. ACTIVITY VIEW -->
+  <div id="view-activity" class="view">
+    <div class="panel">
+      <h2>📋 My Activity</h2>
+      <ul class="list" id="historyList">
+        <li><span style="color: var(--text-muted);">No recent activity.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 4. WALLET VIEW -->
+  <div id="view-wallet" class="view">
+    
+    <!-- Deposit Section -->
+    <div class="panel" id="depositSection">
+      <h2>💰 Deposit</h2>
+      <div style="background: var(--cell); padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 10px; border-left: 3px solid var(--accent);">
         <b>Telebirr:</b> 0912345678 (Dot Bingo)<br>
         <b>CBE:</b> 1000123456789 (Dot Bingo)
       </div>
@@ -83,14 +175,12 @@
         <option value="cbe">CBE</option>
       </select>
       <input type="text" id="depProof" placeholder="Transaction ID / SMS Reference">
-      <button class="btn-blue" onclick="handleDeposit()">Submit Deposit</button>
+      <button class="btn-green" onclick="handleDeposit()">Submit Deposit</button>
     </div>
-  </details>
 
-  <!-- 3. WITHDRAW (Collapsible) -->
-  <details id="withdrawAcc">
-    <summary style="color: var(--red)">💸 Request Withdraw</summary>
-    <div class="content">
+    <!-- Withdraw Section -->
+    <div class="panel" id="withdrawSection">
+      <h2>💸 Withdraw</h2>
       <input type="number" id="withAmount" placeholder="Amount (Birr)" min="1">
       <select id="withMethod">
         <option value="telebirr">Telebirr</option>
@@ -99,34 +189,24 @@
       <input type="text" id="withAccount" placeholder="Account Number / Phone Number">
       <button class="btn-red" onclick="handleWithdraw()">Submit Withdraw</button>
     </div>
-  </details>
 
-  <!-- 4. PLAY GAME (Collapsible) -->
-  <details id="gameAcc" open>
-    <summary style="color: var(--accent)">🎲 Play Game (100 Birr)</summary>
-    <div class="content">
-      <p id="roundInfo" style="color:#aaa; font-size:14px; margin-top:0;"></p>
-      <div class="grid" id="numberGrid"></div>
-      <p id="selectedInfo" style="color:var(--accent); font-weight:bold; min-height:20px;"></p>
-      <button id="playBtn" onclick="play()" disabled>Pay 100 Birr &amp; Play</button>
-    </div>
-  </details>
+  </div>
 
-  <!-- 5. WINNERS & RESULTS (Collapsible) -->
-  <details id="winnersAcc">
-    <summary style="color: #9C27B0">🏆 Winners &amp; Results</summary>
-    <div class="content" id="winnersList">
-      <p style="color:#aaa;">Loading results...</p>
-    </div>
-  </details>
-
-  <!-- 6. MY HISTORY (Collapsible) -->
-  <details>
-    <summary>📋 My Recent Activity</summary>
-    <div class="content">
-      <ul class="list" id="historyList"><li>No activity yet.</li></ul>
-    </div>
-  </details>
+  <!-- BOTTOM NAVIGATION BAR -->
+  <div class="bottom-nav">
+    <button class="nav-item active" id="nav-play" onclick="switchView('play')">
+      <span class="icon">🎮</span> Play
+    </button>
+    <button class="nav-item" id="nav-winners" onclick="switchView('winners')">
+      <span class="icon">🏆</span> Winners
+    </button>
+    <button class="nav-item" id="nav-activity" onclick="switchView('activity')">
+      <span class="icon">📋</span> Activity
+    </button>
+    <button class="nav-item" id="nav-wallet" onclick="switchView('wallet')">
+      <span class="icon">💳</span> Wallet
+    </button>
+  </div>
 
 </div>
 
@@ -155,7 +235,22 @@
     return data;
   }
 
-  // Build Grid
+  // --- UI NAVIGATION LOGIC ---
+  function switchView(viewName) {
+    // Hide all views
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    
+    // Show selected view
+    $(`view-${viewName}`).classList.add('active');
+    $(`nav-${viewName}`).classList.add('active');
+
+    // Refresh specific data when opening tabs
+    if (viewName === 'winners') loadWinners();
+    if (viewName === 'activity') loadHistory();
+  }
+
+  // Build Number Grid
   const grid = $('numberGrid');
   for (let i = 1; i <= 100; i++) {
     const cell = document.createElement('div');
@@ -169,8 +264,14 @@
   function selectNumber(n) {
     if (takenNumbers.has(n)) return alert('That card is already taken.');
     if (!currentUser || Number(currentUser.balance) < CARD_PRICE) {
-      alert(`Insufficient balance. You need at least ${CARD_PRICE} Birr.`);
-      highlightDeposit();
+      alert(`Insufficient balance. You need ${CARD_PRICE} Birr.`);
+      
+      // Auto-switch to Wallet and highlight Deposit
+      switchView('wallet');
+      const depSec = $('depositSection');
+      depSec.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      depSec.classList.add('highlight');
+      setTimeout(() => depSec.classList.remove('highlight'), 3000);
       return;
     }
     selectedNum = n;
@@ -179,14 +280,6 @@
     });
     $('selectedInfo').textContent = `Selected: ${n}`;
     $('playBtn').disabled = false;
-  }
-
-  function highlightDeposit() {
-    const acc = $('depositAcc');
-    acc.open = true; // Open the accordion
-    acc.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    acc.classList.add('highlight-deposit');
-    setTimeout(() => acc.classList.remove('highlight-deposit'), 3000);
   }
 
   function renderRound(round, taken) {
@@ -202,10 +295,11 @@
       }
     });
     $('roundInfo').textContent = round
-      ? `Round #${round.id} — ${takenNumbers.size}/100 sold`
+      ? `Round #${round.id} — ${takenNumbers.size}/100 Cards Sold`
       : 'No active round. Buy a card to start!';
   }
 
+  // --- AUTHENTICATION ---
   async function login() {
     const name = $('name').value.trim();
     const phone = $('phone').value.trim();
@@ -217,16 +311,17 @@
       });
     } catch (e) { return alert(e.message); }
 
-    $('loginPanel').classList.add('hidden');
-    $('gamePanel').classList.remove('hidden');
+    $('loginScreen').classList.add('hidden');
+    $('appScreen').classList.remove('hidden');
     $('userName').textContent = currentUser.name;
 
     await refresh();
     await loadWinners();
     await loadHistory();
     
+    // Auto-refresh data every 5 seconds
     clearInterval(pollTimer);
-    pollTimer = setInterval(() => { refresh(); loadWinners(); }, 5000); // Auto-refresh every 5s
+    pollTimer = setInterval(() => { refresh(); }, 5000);
   }
 
   async function refresh() {
@@ -242,6 +337,7 @@
     } catch (e) { console.error(e); }
   }
 
+  // --- TRANSACTIONS ---
   async function handleDeposit() {
     const amount = Number($('depAmount').value);
     const method = $('depMethod').value;
@@ -281,6 +377,7 @@
     } catch (e) { alert(e.message); }
   }
 
+  // --- PLAY GAME ---
   async function play() {
     if (!selectedNum) return alert('Select a card first.');
     if (Number(currentUser.balance) < CARD_PRICE) return alert('Insufficient balance.');
@@ -304,6 +401,7 @@
     }
   }
 
+  // --- DATA LOADERS ---
   const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
   async function loadHistory() {
@@ -312,9 +410,11 @@
       const data = await api(`/api/player/history/${currentUser.id}`);
       const list = $('historyList');
       const items = [];
+      
       data.transactions.forEach(t => items.push(`<li><span>${t.type === 'deposit' ? 'Deposit' : 'Withdraw'} ${Number(t.amount).toFixed(2)} Birr</span><span class="tag ${esc(t.status)}">${esc(t.status)}</span></li>`));
       data.tickets.forEach(t => items.push(`<li><span>Card ${t.card_number} — round #${t.rounds ? t.rounds.id : '?'}</span><span class="tag">${t.rounds ? esc(t.rounds.status) : ''}</span></li>`));
-      list.innerHTML = items.length ? items.join('') : '<li>No activity yet.</li>';
+      
+      list.innerHTML = items.length ? items.join('') : '<li><span style="color: var(--text-muted);">No recent activity.</span></li>';
     } catch (e) { console.error(e); }
   }
 
@@ -323,32 +423,32 @@
       const data = await api('/api/player/winners');
       const list = $('winnersList');
       if (!data || !data.length) {
-        return list.innerHTML = '<p style="color:#aaa;">No finished rounds yet.</p>';
+        return list.innerHTML = '<p style="text-align: center; color: var(--text-muted);">No finished rounds yet.</p>';
       }
 
       list.innerHTML = data.map(round => {
         let winnersHtml = '';
         if (round.winners.length === 0) {
-          winnersHtml = '<li style="color:#888;">No winners for these numbers.</li>';
+          winnersHtml = '<li><span style="color: var(--text-muted);">No winners for these numbers.</span></li>';
         } else {
           winnersHtml = round.winners.map(w => `
             <li>
               <span><b>Card ${w.card_number}</b></span>
               <span>${esc(w.users?.name)}</span>
-              <span style="color:#aaa;">${esc(w.users?.phone)}</span>
+              <span style="color: var(--text-muted); font-size: 12px;">${esc(w.users?.phone)}</span>
             </li>
           `).join('');
         }
 
         return `
-          <div style="background:#1b1b2b; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #3b3b58;">
-            <h4 style="margin:0 0 10px; color:var(--accent);">Round #${round.round_id}</h4>
+          <div style="margin-bottom: 25px; border-bottom: 1px solid var(--cell); padding-bottom: 15px;">
+            <h4 style="margin-bottom: 10px; font-size: 16px;">Round #${round.round_id}</h4>
             <div class="win-balls">
               <div class="ball">${round.draw_1}</div>
               <div class="ball">${round.draw_2}</div>
               <div class="ball">${round.draw_3}</div>
             </div>
-            <ul class="list" style="margin-top:10px;">
+            <ul class="list" style="margin-top: 10px;">
               ${winnersHtml}
             </ul>
           </div>
