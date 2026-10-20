@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Number</title>
+<title>NUMBER</title>
 <style>
   :root { --bg: #12121f; --panel: #1e1e2f; --cell: #2a2a40; --accent: #2196F3; --green: #4CAF50; --red: #f44336; --text: #ffffff; --text-muted: #888; }
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -37,13 +37,11 @@
   .btn-green { background: var(--green); }
   .btn-red { background: var(--red); }
 
-  /* Game Grid */
   .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; margin-bottom: 15px; }
   .num { background: var(--cell); padding: 10px 0; cursor: pointer; border-radius: 4px; font-size: 13px; text-align: center; user-select: none; transition: 0.1s; }
   .num.selected { background: var(--accent); color: #fff; font-weight: bold; box-shadow: 0 0 8px rgba(33, 150, 243, 0.5); }
   .num.taken { background: #1a1a2e; color: #444; cursor: not-allowed; text-decoration: line-through; }
   
-  /* Lists */
   ul.list { list-style: none; width: 100%; }
   ul.list li { padding: 14px 0; border-bottom: 1px solid var(--cell); display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
   ul.list li:last-child { border-bottom: none; }
@@ -52,7 +50,6 @@
   .tag.rejected { background: #c62828; color: #fff; }
   .tag.pending  { background: #f57c00; color: #fff; }
 
-  /* Podium Styles */
   .podium-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-radius: 8px; margin-bottom: 10px; background: var(--cell); }
   .podium-1 { border-left: 4px solid #FFD700; background: rgba(255, 215, 0, 0.1); }
   .podium-2 { border-left: 4px solid #C0C0C0; background: rgba(192, 192, 192, 0.1); }
@@ -66,7 +63,6 @@
   .podium-phone { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
   .no-winner { color: var(--text-muted); font-style: italic; font-size: 13px; }
 
-  /* Bottom Navigation */
   .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--panel); display: flex; justify-content: space-around; padding: 8px 5px 15px; border-top: 1px solid #2a2a40; z-index: 100; }
   .nav-item { background: transparent; border: none; color: var(--text-muted); font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 12px; border-radius: 12px; margin: 0; width: auto; cursor: pointer; transition: 0.3s; font-weight: 600; }
   .nav-item svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -81,7 +77,7 @@
 
 <div id="loginScreen">
   <div class="panel" style="padding: 30px 20px;">
-    <h2 style="color: var(--accent); margin-bottom: 20px;">Number Draw</h2>
+    <h2 style="color: var(--accent); margin-bottom: 20px;">Number Drawn</h2>
     <input type="text" id="name" placeholder="Full Name" autocomplete="name">
     <input type="tel" id="phone" placeholder="Phone Number (09... or +251...)" autocomplete="tel">
     <button onclick="login()" style="margin-top: 10px;">Login / Register</button>
@@ -101,7 +97,6 @@
     </div>
   </div>
 
-  <!-- PLAY VIEW -->
   <div id="view-play" class="view active">
     <div class="quick-actions">
       <button class="quick-btn deposit" onclick="scrollToWallet('depositSection')">
@@ -123,7 +118,6 @@
     </div>
   </div>
 
-  <!-- WINNERS VIEW -->
   <div id="view-winners" class="view">
     <div class="panel">
       <h2>Winners & Results</h2>
@@ -133,23 +127,21 @@
     </div>
   </div>
 
-  <!-- ACTIVITY VIEW -->
   <div id="view-activity" class="view">
     <div class="panel">
-      <h2>My Activity</h2>
+      <h2>My Activity (Last 10)</h2>
       <ul class="list" id="historyList">
         <li><span style="color: var(--text-muted);">No recent activity.</span></li>
       </ul>
     </div>
   </div>
 
-  <!-- WALLET VIEW -->
   <div id="view-wallet" class="view">
     <div class="panel" id="depositSection">
       <h2>💰 Deposit</h2>
       <div style="background: var(--cell); padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; border-left: 3px solid var(--green); line-height: 1.6;">
         <b>Telebirr:</b> 0912345678 <br>
-        <b>CBE:</b> 1000123456789 
+        <b>CBE:</b> 1000123456789
       </div>
       <input type="number" id="depAmount" placeholder="Amount (Birr)" min="1">
       <select id="depMethod">
@@ -172,7 +164,6 @@
     </div>
   </div>
 
-  <!-- BOTTOM NAVIGATION -->
   <div class="bottom-nav">
     <button class="nav-item active" id="nav-play" onclick="switchView('play')">
       <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
@@ -200,7 +191,7 @@
 
   const CARD_PRICE = 100;
   let currentUser = null;
-  let selectedNums = new Set(); // Now stores multiple numbers
+  let selectedNums = new Set();
   let takenNumbers = new Set();
   let pollTimer = null;
 
@@ -246,7 +237,6 @@
   function selectNumber(n) {
     if (takenNumbers.has(n)) return alert('That card is already taken.');
 
-    // Toggle selection
     if (selectedNums.has(n)) {
       selectedNums.delete(n);
       document.querySelector(`.num[data-num="${n}"]`).classList.remove('selected');
@@ -284,7 +274,6 @@
   function renderRound(round, taken) {
     takenNumbers = new Set((taken || []).map(Number));
     
-    // Remove selections that became taken
     let changed = false;
     selectedNums.forEach(n => {
       if (takenNumbers.has(n)) {
@@ -327,7 +316,7 @@
       currentUser.balance = Number(me.balance);
       $('balance').textContent = currentUser.balance.toFixed(2);
       renderRound(round.round, round.taken);
-      updatePlayButton(); // Re-check balance
+      updatePlayButton();
     } catch (e) { console.error(e); }
   }
 
@@ -361,10 +350,8 @@
 
   async function play() {
     if (selectedNums.size === 0) return;
-    
     const count = selectedNums.size;
     const totalCost = count * CARD_PRICE;
-    
     if (Number(currentUser.balance) < totalCost) return alert('Insufficient balance.');
     if (!confirm(`Join round with ${count} card(s) for ${totalCost} Birr?\n\nCards: ${Array.from(selectedNums).join(', ')}`)) return;
 
@@ -382,8 +369,6 @@
       });
       
       alert(data.message);
-      
-      // Clear selections
       selectedNums.clear();
       document.querySelectorAll('.num').forEach(el => el.classList.remove('selected'));
       updatePlayButton();
@@ -404,9 +389,27 @@
     try {
       const data = await api(`/api/player/history/${currentUser.id}`);
       const list = $('historyList');
+      
+      // Combine transactions and tickets, then sort by date
+      let combined = [
+        ...data.transactions.map(t => ({ ...t, itemType: 'transaction' })),
+        ...data.tickets.map(t => ({ ...t, itemType: 'ticket' }))
+      ];
+      
+      combined.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      
+      // Strictly limit to the last 10 items
+      combined = combined.slice(0, 10);
+
       const items = [];
-      data.transactions.forEach(t => items.push(`<li><span>${t.type === 'deposit' ? 'Deposit' : 'Withdraw'} ${Number(t.amount).toFixed(2)} Birr</span><span class="tag ${esc(t.status)}">${esc(t.status)}</span></li>`));
-      data.tickets.forEach(t => items.push(`<li><span>Card ${t.card_number} — round #${t.rounds ? t.rounds.id : '?'}</span><span class="tag">${t.rounds ? esc(t.rounds.status) : ''}</span></li>`));
+      combined.forEach(item => {
+        if (item.itemType === 'transaction') {
+          items.push(`<li><span>${item.type === 'deposit' ? 'Deposit' : 'Withdraw'} ${Number(item.amount).toFixed(2)} Birr</span><span class="tag ${esc(item.status)}">${esc(item.status)}</span></li>`);
+        } else {
+          items.push(`<li><span>Card ${item.card_number} — round #${item.rounds ? item.rounds.id : '?'}</span><span class="tag">${item.rounds ? esc(item.rounds.status) : ''}</span></li>`);
+        }
+      });
+      
       list.innerHTML = items.length ? items.join('') : '<li><span style="color: var(--text-muted);">No recent activity.</span></li>';
     } catch (e) { console.error(e); }
   }
@@ -436,7 +439,6 @@
             <h4 style="margin-bottom: 5px; font-size: 16px; text-align: center; color: var(--accent);">Round #${round.round_id}</h4>
             <p style="text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 15px;">${round.total_players} Players • Pool: ${(round.total_players * 100).toFixed(0)} Birr</p>
             
-            <!-- 1st Place -->
             <div class="podium-item podium-1">
               <div class="podium-left">
                 <span class="podium-place">🥇 1st Place (60%)</span>
@@ -450,7 +452,6 @@
               </div>
             </div>
 
-            <!-- 2nd Place -->
             <div class="podium-item podium-2">
               <div class="podium-left">
                 <span class="podium-place">🥈 2nd Place (10%)</span>
@@ -464,7 +465,6 @@
               </div>
             </div>
 
-            <!-- 3rd Place -->
             <div class="podium-item podium-3">
               <div class="podium-left">
                 <span class="podium-place">🥉 3rd Place (5%)</span>
