@@ -38,10 +38,11 @@ function adminOnly(req, res, next) {
 }
 
 // ---------- STATIC PAGES ----------
-app.get(['/', '/player.html'], (req, res) =>
+// NEW CODE - handles /admin, /admin.html, /player, and /player.html
+app.get(['/', '/player', '/player.html'], (req, res) =>
   res.sendFile(path.join(__dirname, 'player.html'))
 );
-app.get('/admin.html', (req, res) =>
+app.get(['/admin', '/admin.html'], (req, res) =>
   res.sendFile(path.join(__dirname, 'admin.html'))
 );
 
