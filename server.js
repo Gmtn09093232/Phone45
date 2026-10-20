@@ -25,11 +25,12 @@ function adminOnly(req, res, next) {
   next();
 }
 
+// ---------- STATIC PAGES ----------
 app.get(['/', '/player', '/player.html'], (req, res) => res.sendFile(path.join(__dirname, 'player.html')));
 app.get(['/admin', '/admin.html'], (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
-// --- HELPER FUNCTION TO FETCH WINNERS WITH PRIZES ---
+// ---------- HELPER: FETCH WINNERS & CALCULATE PRIZES ----------
 async function fetchWinners(limit) {
   const { data: rounds, error: rErr } = await supabase
     .from('rounds')
@@ -43,7 +44,7 @@ async function fetchWinners(limit) {
 
   const results = [];
   for (const round of rounds) {
-    // Get tickets sold in this round
+    // Get total tickets sold in this round to calculate the pool
     const { data: allTickets, error: cErr } = await supabase
       .from('tickets')
       .select('*', { count: 'exact' })
@@ -51,9 +52,9 @@ async function fetchWinners(limit) {
 
     if (cErr) throw cErr;
     const totalTickets = allTickets.length;
-    const totalPool = totalTickets * 100;
+    const totalPool = totalTickets * CARD_PRICE;
     
-    // Calculate prizes
+    // Calculate prizes (60%, 10%, 5%)
     const prizes = {
       p1: totalPool * 0.60,
       p2: totalPool * 0.10,
@@ -94,7 +95,7 @@ app.post('/api/player/login', wrap(async (req, res) => {
   const name = String(req.body.name || '').trim();
   const phone = String(req.body.phone || '').replace(/\s+/g, '');
   if (!name) return res.status(400).json({ error: 'Name is required' });
-  if (!PHONE_RE.test(phone)) return res.status(400).json({ error: 'Invalid phone format.' });
+  if (!PHONE_RE.test(phone)) return res.status(400).json({ error: 'Invalid phone format. Use 09... or +251...' });
 
   const { data: existing, error: findErr } = await supabase.from('users').select('*').eq('phone', phone).maybeSingle();
   if (findErr) throw findErr;
@@ -139,17 +140,33 @@ app.post('/api/player/withdraw', wrap(async (req, res) => {
   res.json({ message: 'Withdrawal requested.', new_balance: data.new_balance });
 }));
 
+// UPDATED: Play route accepts an array of card numbers
 app.post('/api/player/play', wrap(async (req, res) => {
-  const { user_id, card_number } = req.body;
-  const { data, error } = await supabase.rpc('place_ticket', { p_user_id: user_id, p_card_number: card_number });
+  const { user_id, card_numbers } = req.body;
+  
+  if (!Array.isArray(card_numbers) || card_numbers.length === 0) {
+    return res.status(400).json({ error: 'Select at least one card.' });
+  }
+
+  // Calls the new DB function that handles arrays
+  const { data, error } = await supabase.rpc('place_tickets', { 
+    p_user_id: user_id, 
+    p_card_numbers: card_numbers 
+  });
+  
   if (error) return res.status(400).json({ error: error.message });
-  res.json({ message: `Joined round #${data.round_id} with card ${data.card_number}.`, ...data });
+  
+  res.json({ 
+    message: `Successfully joined round #${data.round_id} with ${data.count} card(s)!`, 
+    ...data 
+  });
 }));
 
 app.get('/api/player/round', wrap(async (req, res) => {
   const { data: round, error: rErr } = await supabase.from('rounds').select('id, status, created_at').eq('status', 'active').maybeSingle();
   if (rErr) throw rErr;
   if (!round) return res.json({ round: null, taken: [] });
+  
   const { data: tickets, error } = await supabase.from('tickets').select('card_number').eq('round_id', round.id);
   if (error) throw error;
   res.json({ round, taken: (tickets || []).map(t => t.card_number) });
@@ -191,7 +208,13 @@ app.post('/api/admin/transaction/:id', adminOnly, wrap(async (req, res) => {
 app.get('/api/admin/players', adminOnly, wrap(async (req, res) => {
   const { data: round } = await supabase.from('rounds').select('id').eq('status', 'active').maybeSingle();
   if (!round) return res.json({ round: null, players: [] });
-  const { data, error } = await supabase.from('tickets').select('card_number, users (name, phone)').eq('round_id', round.id).order('card_number', { ascending: true });
+  
+  const { data, error } = await supabase
+    .from('tickets')
+    .select('card_number, users (name, phone)')
+    .eq('round_id', round.id)
+    .order('card_number', { ascending: true });
+    
   res.json({ round, players: data });
 }));
 
@@ -204,12 +227,16 @@ app.post('/api/admin/draw', adminOnly, wrap(async (req, res) => {
 app.post('/api/admin/new-round', adminOnly, wrap(async (req, res) => {
   const { data: existing } = await supabase.from('rounds').select('id').eq('status', 'active').maybeSingle();
   if (existing) return res.status(400).json({ error: 'A round is already active' });
+  
   const { data, error } = await supabase.from('rounds').insert({ status: 'active' }).select().single();
+  if (error) throw error;
+  
   res.json({ message: 'New round created.', round: data });
 }));
 
+// ---------- 404 & ERROR HANDLERS ----------
 app.use((req, res) => res.status(404).json({ error: `No API route for ${req.method} ${req.path}` }));
 app.use((err, req, res, next) => { console.error(err); res.status(500).json({ error: err.message || 'Server error' }); });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Dot Bingo server running on port ${PORT}`));
