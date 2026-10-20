@@ -55,7 +55,6 @@ app.get('/api/player/data/:user_id', wrap(async (req, res) => {
   res.json(data);
 }));
 
-// UPDATED: Deposit now takes method and proof
 app.post('/api/player/deposit', wrap(async (req, res) => {
   const { user_id, amount, method, proof } = req.body;
   if (!Number.isFinite(amount) || amount <= 0) return res.status(400).json({ error: 'Invalid amount' });
@@ -68,36 +67,18 @@ app.post('/api/player/deposit', wrap(async (req, res) => {
   res.json({ message: 'Deposit request sent. Waiting for admin approval.' });
 }));
 
-// UPDATED: Withdraw now takes method and account details
 app.post('/api/player/withdraw', wrap(async (req, res) => {
   const { user_id, amount, method, account_details } = req.body;
   if (!Number.isFinite(amount) || amount <= 0) return res.status(400).json({ error: 'Invalid amount' });
   if (!account_details) return res.status(400).json({ error: 'Account details required' });
 
+  // Make sure you have updated your Supabase RPC function to accept these params!
   const { data, error } = await supabase.rpc('request_withdrawal', {
     p_user_id: user_id, p_amount: amount, p_method: method, p_account: account_details
   });
   if (error) return res.status(400).json({ error: error.message });
   res.json({ message: 'Withdrawal requested.', new_balance: data.new_balance });
 }));
-
-// Note: You must update your Supabase SQL function `request_withdrawal` to accept method and account!
-// Run this in Supabase SQL editor:
-/*
-DROP FUNCTION IF EXISTS request_withdrawal(bigint, numeric);
-CREATE OR REPLACE FUNCTION request_withdrawal(p_user_id bigint, p_amount numeric, p_method text, p_account text)
-RETURNS json LANGUAGE plpgsql AS $$
-DECLARE v_user users;
-BEGIN
-  IF p_amount <= 0 THEN RAISE EXCEPTION 'Invalid amount'; END IF;
-  SELECT * INTO v_user FROM users WHERE id = p_user_id FOR UPDATE;
-  IF v_user.balance < p_amount THEN RAISE EXCEPTION 'Insufficient balance'; END IF;
-  UPDATE users SET balance = balance - p_amount WHERE id = p_user_id;
-  INSERT INTO transactions (user_id, type, amount, status, method, account_details) 
-  VALUES (p_user_id, 'withdrawal', p_amount, 'pending', p_method, p_account);
-  RETURN json_build_object('new_balance', v_user.balance - p_amount);
-END; $$;
-*/
 
 app.post('/api/player/play', wrap(async (req, res) => {
   const { user_id, card_number } = req.body;
@@ -123,9 +104,48 @@ app.get('/api/player/history/:user_id', wrap(async (req, res) => {
   res.json({ transactions: tx.data, tickets: tickets.data });
 }));
 
+// BULLETPROOF WINNERS ROUTE
+app.get('/api/player/winners', wrap(async (req, res) => {
+  // 1. Get the last 5 finished rounds
+  const { data: rounds, error: rErr } = await supabase
+    .from('rounds')
+    .select('id, draw_1, draw_2, draw_3, finished_at')
+    .eq('status', 'finished')
+    .order('finished_at', { ascending: false })
+    .limit(5);
+    
+  if (rErr) throw rErr;
+  if (!rounds || rounds.length === 0) return res.json([]);
+
+  const results = [];
+
+  // 2. Loop through each round and fetch the specific winning tickets
+  for (const round of rounds) {
+    const winningNumbers = [round.draw_1, round.draw_2, round.draw_3];
+    
+    const { data: tickets, error: tErr } = await supabase
+      .from('tickets')
+      .select('card_number, users (name, phone)')
+      .eq('round_id', round.id)
+      .in('card_number', winningNumbers);
+
+    if (tErr) throw tErr;
+
+    results.push({
+      round_id: round.id,
+      draw_1: round.draw_1,
+      draw_2: round.draw_2,
+      draw_3: round.draw_3,
+      finished_at: round.finished_at,
+      winners: tickets || []
+    });
+  }
+
+  res.json(results);
+}));
+
 // ---------- ADMIN ROUTES ----------
 app.get('/api/admin/transactions', adminOnly, wrap(async (req, res) => {
-  // Added method, proof, account_details to the select
   const { data, error } = await supabase
     .from('transactions').select('id, type, amount, status, created_at, method, proof, account_details, users (name, phone)')
     .eq('status', 'pending').order('created_at', { ascending: true });
