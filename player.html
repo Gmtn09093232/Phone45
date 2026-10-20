@@ -5,15 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dot Bingo — Player</title>
 <style>
-  :root { --bg:#1e1e2f; --panel:#2a2a40; --cell:#3b3b58; --accent:#FF9800; --green:#4CAF50; }
+  :root { --bg:#1e1e2f; --panel:#2a2a40; --cell:#3b3b58; --accent:#FF9800; --green:#4CAF50; --blue:#2196F3; --red:#f44336; }
   * { box-sizing: border-box; }
   body { font-family: system-ui, sans-serif; background: var(--bg); color:#fff; padding:20px; text-align:center; margin:0; }
   .panel { background: var(--panel); padding:20px; border-radius:10px; max-width:520px; margin:0 auto 20px; transition: all .3s ease; }
-  h2 { margin-top:0; }
-  input, button { padding:10px; margin:5px 0; border-radius:5px; border:none; width:100%; font-size:15px; }
-  input { background:#1b1b2b; color:#fff; }
+  h2 { margin-top:0; font-size: 20px; }
+  h3 { margin: 10px 0 5px; font-size: 15px; color: #aaa; }
+  input, select, button { padding:10px; margin:5px 0; border-radius:5px; border:none; width:100%; font-size:15px; }
+  input, select { background:#1b1b2b; color:#fff; border: 1px solid #3b3b58; }
   button { background: var(--green); color:#fff; cursor:pointer; font-weight:bold; }
   button:disabled { background: gray; cursor: not-allowed; }
+  .btn-blue { background: var(--blue); }
+  .btn-red { background: var(--red); }
   .row { display:flex; gap:10px; }
   .row > button { flex:1; }
   .grid { display:grid; grid-template-columns: repeat(10, 1fr); gap:5px; margin-top:15px; }
@@ -21,7 +24,6 @@
   .num.selected { background: var(--accent); color:#000; font-weight:bold; }
   .num.taken { background:#232338; color:#555; cursor:not-allowed; text-decoration: line-through; }
   #balance { color: var(--green); font-size:24px; font-weight:bold; }
-  #selectedInfo { min-height:20px; color: var(--accent); font-weight:bold; }
   .hidden { display:none; }
   .highlight-deposit { border: 2px solid var(--accent); box-shadow: 0 0 15px rgba(255,152,0,.5); background:#35354d; }
   ul.history { list-style:none; padding:0; margin:0; text-align:left; font-size:14px; }
@@ -30,6 +32,7 @@
   .tag.approved { background:#2e7d32; }
   .tag.rejected { background:#c62828; }
   .tag.pending  { background:#6d4c41; }
+  .info-box { background: #1b1b2b; padding: 10px; border-radius: 5px; border-left: 3px solid var(--accent); text-align: left; margin: 10px 0; font-size: 14px; }
 </style>
 </head>
 <body>
@@ -42,24 +45,54 @@
 </div>
 
 <div id="gamePanel" class="hidden">
+  
+  <!-- Balance Panel -->
   <div class="panel" id="depositPanel">
     <h2>Welcome, <span id="userName"></span></h2>
     <p>Balance: <span id="balance">0.00</span> Birr</p>
-    <input type="number" id="amount" placeholder="Amount (Birr)" min="1" step="1">
-    <div class="row">
-      <button onclick="transaction('deposit')">Request Deposit</button>
-      <button onclick="transaction('withdraw')">Request Withdraw</button>
-    </div>
   </div>
 
+  <!-- Deposit Section -->
   <div class="panel">
-    <h2>Select Card (Cost: 100 Birr)</h2>
+    <h2>💰 Request Deposit</h2>
+    <h3>1. Send money to our account:</h3>
+    <div class="info-box">
+      <b>Telebirr:</b> 0912345678 (Dot Bingo)<br>
+      <b>CBE:</b> 1000123456789 (Dot Bingo)
+    </div>
+    
+    <h3>2. Submit your details:</h3>
+    <input type="number" id="depAmount" placeholder="Amount (Birr)" min="1">
+    <select id="depMethod">
+      <option value="telebirr">Telebirr</option>
+      <option value="cbe">CBE (Commercial Bank of Ethiopia)</option>
+    </select>
+    <input type="text" id="depProof" placeholder="Transaction ID / SMS Reference">
+    <button class="btn-blue" onclick="handleDeposit()">Submit Deposit Request</button>
+  </div>
+
+  <!-- Withdraw Section -->
+  <div class="panel">
+    <h2>💸 Request Withdraw</h2>
+    <input type="number" id="withAmount" placeholder="Amount (Birr)" min="1">
+    <select id="withMethod">
+      <option value="telebirr">Telebirr</option>
+      <option value="cbe">CBE (Commercial Bank of Ethiopia)</option>
+    </select>
+    <input type="text" id="withAccount" placeholder="Account Number / Phone Number">
+    <button class="btn-red" onclick="handleWithdraw()">Submit Withdraw Request</button>
+  </div>
+
+  <!-- Game Grid -->
+  <div class="panel">
+    <h2>🎲 Select Card (Cost: 100 Birr)</h2>
     <p id="roundInfo" style="color:#aaa; font-size:14px;"></p>
     <div class="grid" id="numberGrid"></div>
-    <p id="selectedInfo"></p>
+    <p id="selectedInfo" style="color:var(--accent); font-weight:bold; min-height:20px;"></p>
     <button id="playBtn" onclick="play()" disabled>Pay 100 Birr &amp; Play</button>
   </div>
 
+  <!-- History -->
   <div class="panel">
     <h2>Recent Activity</h2>
     <ul class="history" id="historyList"><li>No activity yet.</li></ul>
@@ -68,7 +101,6 @@
 
 <script>
   // ⚠️ CHANGE THIS TO YOUR DEPLOYED BACKEND URL (e.g., https://my-backend.onrender.com)
-  // If running locally, it will automatically use localhost.
   const LIVE_BACKEND_URL = 'https://phone45.vercel.app/'; 
   
   const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
@@ -93,6 +125,7 @@
     return data;
   }
 
+  // Game Grid Setup
   const grid = $('numberGrid');
   for (let i = 1; i <= 100; i++) {
     const cell = document.createElement('div');
@@ -149,12 +182,9 @@
 
     try {
       currentUser = await api('/api/player/login', {
-        method: 'POST',
-        body: JSON.stringify({ name, phone })
+        method: 'POST', body: JSON.stringify({ name, phone })
       });
-    } catch (e) {
-      return alert(e.message);
-    }
+    } catch (e) { return alert(e.message); }
 
     $('loginPanel').classList.add('hidden');
     $('gamePanel').classList.remove('hidden');
@@ -179,16 +209,42 @@
     } catch (e) { console.error(e); }
   }
 
-  async function transaction(type) {
-    const amount = Number($('amount').value);
+  async function handleDeposit() {
+    const amount = Number($('depAmount').value);
+    const method = $('depMethod').value;
+    const proof = $('depProof').value.trim();
+
     if (!Number.isFinite(amount) || amount <= 0) return alert('Enter a valid amount.');
+    if (!proof) return alert('Please enter the Transaction ID / SMS Reference.');
+
     try {
-      const data = await api(`/api/player/${type}`, {
+      const data = await api('/api/player/deposit', {
         method: 'POST',
-        body: JSON.stringify({ user_id: currentUser.id, amount })
+        body: JSON.stringify({ user_id: currentUser.id, amount, method, proof })
       });
       alert(data.message);
-      $('amount').value = '';
+      $('depAmount').value = '';
+      $('depProof').value = '';
+      await loadHistory();
+    } catch (e) { alert(e.message); }
+  }
+
+  async function handleWithdraw() {
+    const amount = Number($('withAmount').value);
+    const method = $('withMethod').value;
+    const account_details = $('withAccount').value.trim();
+
+    if (!Number.isFinite(amount) || amount <= 0) return alert('Enter a valid amount.');
+    if (!account_details) return alert('Please enter your account/phone number.');
+
+    try {
+      const data = await api('/api/player/withdraw', {
+        method: 'POST',
+        body: JSON.stringify({ user_id: currentUser.id, amount, method, account_details })
+      });
+      alert(data.message);
+      $('withAmount').value = '';
+      $('withAccount').value = '';
       await refresh();
       await loadHistory();
     } catch (e) { alert(e.message); }
