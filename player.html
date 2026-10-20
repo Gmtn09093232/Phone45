@@ -6,8 +6,8 @@
 <title>Dot Bingo</title>
 <style>
   :root { --bg: #12121f; --panel: #1e1e2f; --cell: #2a2a40; --accent: #2196F3; --green: #4CAF50; --red: #f44336; --text: #ffffff; --text-muted: #888; }
-  * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-  body { background: var(--bg); color: var(--text); padding-bottom: 80px; }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bg); color: var(--text); padding-bottom: 85px; /* Space for nav */ }
   
   .top-bar { background: var(--panel); padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
   .user-info { text-align: left; font-size: 14px; }
@@ -24,13 +24,14 @@
 
   /* Quick Actions */
   .quick-actions { display: flex; gap: 10px; margin-bottom: 15px; }
-  .quick-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 8px; border: none; font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.2s; color: #fff; }
+  .quick-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 12px; border-radius: 8px; border: none; font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.2s; color: #fff; }
   .quick-btn.deposit { background: rgba(76, 175, 80, 0.15); color: var(--green); border: 1px solid var(--green); }
   .quick-btn.withdraw { background: rgba(244, 67, 54, 0.15); color: var(--red); border: 1px solid var(--red); }
   .quick-btn:active { transform: scale(0.97); }
   .quick-btn svg { width: 18px; height: 18px; }
 
-  input, select, button { padding: 14px; margin-bottom: 10px; border-radius: 8px; border: none; width: 100%; font-size: 15px; }
+  /* Inputs & Buttons */
+  input, select, button { padding: 14px; margin-bottom: 10px; border-radius: 8px; border: none; width: 100%; font-size: 16px; /* Prevents iOS zoom */ }
   input, select { background: var(--cell); color: #fff; border: 1px solid #3b3b58; }
   button { background: var(--accent); color: #fff; cursor: pointer; font-weight: bold; transition: 0.2s; }
   button:active { opacity: 0.8; transform: scale(0.98); }
@@ -38,13 +39,15 @@
   .btn-green { background: var(--green); }
   .btn-red { background: var(--red); }
 
-  .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; margin-bottom: 15px; }
-  .num { background: var(--cell); padding: 10px 0; cursor: pointer; border-radius: 6px; font-size: 13px; text-align: center; user-select: none; transition: 0.1s; }
+  /* Game Grid */
+  .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; margin-bottom: 15px; }
+  .num { background: var(--cell); padding: 10px 0; cursor: pointer; border-radius: 4px; font-size: 13px; text-align: center; user-select: none; transition: 0.1s; }
   .num.selected { background: var(--accent); color: #fff; font-weight: bold; box-shadow: 0 0 8px rgba(33, 150, 243, 0.5); }
   .num.taken { background: #1a1a2e; color: #444; cursor: not-allowed; text-decoration: line-through; }
   
+  /* Lists */
   ul.list { list-style: none; width: 100%; }
-  ul.list li { padding: 12px 0; border-bottom: 1px solid var(--cell); display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+  ul.list li { padding: 14px 0; border-bottom: 1px solid var(--cell); display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
   ul.list li:last-child { border-bottom: none; }
   .tag { font-size: 11px; padding: 4px 8px; border-radius: 6px; background: var(--cell); font-weight: bold; }
   .tag.approved { background: #2e7d32; color: #fff; }
@@ -58,18 +61,20 @@
   .podium-3 { border-left: 4px solid #CD7F32; background: rgba(205, 127, 50, 0.1); }
   
   .podium-left { display: flex; flex-direction: column; text-align: left; }
-  .podium-place { font-size: 12px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; }
-  .podium-num { font-size: 18px; font-weight: bold; color: #fff; }
-  .podium-right { text-align: right; font-size: 14px; }
-  .podium-winner { font-weight: bold; color: #fff; }
-  .podium-phone { font-size: 12px; color: var(--text-muted); }
-  .no-winner { color: var(--text-muted); font-style: italic; }
+  .podium-place { font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; }
+  .podium-num { font-size: 16px; font-weight: bold; color: #fff; margin-top: 2px; }
+  .podium-right { text-align: right; font-size: 14px; max-width: 55%; }
+  .podium-winner { font-weight: bold; color: var(--green); }
+  .podium-phone { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .no-winner { color: var(--text-muted); font-style: italic; font-size: 13px; }
 
-  .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--panel); display: flex; justify-content: space-around; padding: 10px 5px 15px; border-top: 1px solid #2a2a40; z-index: 100; }
+  /* Bottom Navigation */
+  .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--panel); display: flex; justify-content: space-around; padding: 8px 5px 15px; border-top: 1px solid #2a2a40; z-index: 100; }
   .nav-item { background: transparent; border: none; color: var(--text-muted); font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 12px; border-radius: 12px; margin: 0; width: auto; cursor: pointer; transition: 0.3s; font-weight: 600; }
   .nav-item svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .nav-item.active { background: var(--accent); color: #fff; box-shadow: 0 4px 10px rgba(33, 150, 243, 0.4); }
 
+  /* Login Screen */
   #loginScreen { display: flex; flex-direction: column; justify-content: center; height: 100vh; padding: 20px; max-width: 400px; margin: 0 auto; }
   .hidden { display: none !important; }
   .highlight { border: 2px solid var(--accent); box-shadow: 0 0 15px rgba(33, 150, 243, 0.5); transition: 0.3s; }
@@ -79,7 +84,7 @@
 
 <div id="loginScreen">
   <div class="panel" style="padding: 30px 20px;">
-    <h2 style="color: var(--accent); margin-bottom: 20px;">Number Game</h2>
+    <h2 style="color: var(--accent); margin-bottom: 20px;">Dot Bingo</h2>
     <input type="text" id="name" placeholder="Full Name" autocomplete="name">
     <input type="tel" id="phone" placeholder="Phone Number (09... or +251...)" autocomplete="tel">
     <button onclick="login()" style="margin-top: 10px;">Login / Register</button>
@@ -145,7 +150,7 @@
   <div id="view-wallet" class="view">
     <div class="panel" id="depositSection">
       <h2>💰 Deposit</h2>
-      <div style="background: var(--cell); padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 10px; border-left: 3px solid var(--green);">
+      <div style="background: var(--cell); padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; border-left: 3px solid var(--green); line-height: 1.6;">
         <b>Telebirr:</b> 0912345678 (Dot Bingo)<br>
         <b>CBE:</b> 1000123456789 (Dot Bingo)
       </div>
@@ -387,8 +392,8 @@
               </div>
               <div class="podium-right">
                 ${w1 
-                  ? `<div class="podium-winner" style="color: var(--green);">${round.prizes.p1.toFixed(2)} Birr</div>
-                     <div class="podium-phone">${esc(w1.name)} (${esc(w1.phone)})</div>` 
+                  ? `<div class="podium-winner">${round.prizes.p1.toFixed(2)} Birr</div>
+                     <div class="podium-phone">${esc(w1.name)}<br>${esc(w1.phone)}</div>` 
                   : `<span class="no-winner">No Winner</span>`}
               </div>
             </div>
@@ -401,8 +406,8 @@
               </div>
               <div class="podium-right">
                 ${w2 
-                  ? `<div class="podium-winner" style="color: var(--green);">${round.prizes.p2.toFixed(2)} Birr</div>
-                     <div class="podium-phone">${esc(w2.name)} (${esc(w2.phone)})</div>` 
+                  ? `<div class="podium-winner">${round.prizes.p2.toFixed(2)} Birr</div>
+                     <div class="podium-phone">${esc(w2.name)}<br>${esc(w2.phone)}</div>` 
                   : `<span class="no-winner">No Winner</span>`}
               </div>
             </div>
@@ -415,8 +420,8 @@
               </div>
               <div class="podium-right">
                 ${w3 
-                  ? `<div class="podium-winner" style="color: var(--green);">${round.prizes.p3.toFixed(2)} Birr</div>
-                     <div class="podium-phone">${esc(w3.name)} (${esc(w3.phone)})</div>` 
+                  ? `<div class="podium-winner">${round.prizes.p3.toFixed(2)} Birr</div>
+                     <div class="podium-phone">${esc(w3.name)}<br>${esc(w3.phone)}</div>` 
                   : `<span class="no-winner">No Winner</span>`}
               </div>
             </div>
