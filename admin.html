@@ -29,7 +29,6 @@
   .badge { background:#3b3b58; padding:2px 6px; border-radius:4px; font-size:12px; text-transform:uppercase; }
   .proof-text { font-family: monospace; background: #1b1b2b; padding: 4px 8px; border-radius: 4px; font-size: 13px; border: 1px solid #3b3b58; }
   
-  /* Winner styles */
   .place-1 { color: #FFD700; font-weight: bold; }
   .place-2 { color: #C0C0C0; font-weight: bold; }
   .place-3 { color: #CD7F32; font-weight: bold; }
@@ -37,7 +36,7 @@
 </head>
 <body>
 
-<h1>Dot Bingo — Admin</h1>
+<h1>Admin</h1>
 
 <div class="panel" id="authPanel">
   <h2>Admin Key</h2>
@@ -90,11 +89,6 @@
 <script>
   const LIVE_BACKEND_URL = 'https://phone45.vercel.app/'; // ⚠️ UPDATE THIS
   const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:3000' : LIVE_BACKEND_URL;
-
-  // Set the prize amounts here
-  const PRIZE_1 = 5000;
-  const PRIZE_2 = 3000;
-  const PRIZE_3 = 2000;
 
   let adminKey = localStorage.getItem('dotBingoAdminKey') || '';
   let timer = null;
@@ -192,7 +186,6 @@
       let html = '';
       
       rounds.forEach(round => {
-        // Find winner for each draw
         const getWinner = (num) => {
           if (!round.winners) return null;
           const w = round.winners.find(x => x.card_number === num);
@@ -204,29 +197,29 @@
         const w2 = getWinner(round.draw_2);
         const w3 = getWinner(round.draw_3);
 
-        // Row 1 (1st place)
         html += `<tr>
-          <td rowspan="3" style="vertical-align:top; font-weight:bold; border-bottom: 2px solid #555;">Round<br>#${round.round_id}</td>
-          <td class="place-1">🥇 1st (${round.draw_1})</td>
+          <td rowspan="3" style="vertical-align:top; font-weight:bold; border-bottom: 2px solid #555;">
+            Round<br>#${round.round_id}<br>
+            <small style="color:#aaa; font-weight:normal;">${round.total_players} players</small>
+          </td>
+          <td class="place-1">🥇 1st (${round.draw_1 || '-'})</td>
           <td>${w1 ? esc(w1.name) : '<span class="empty">No Winner</span>'}</td>
           <td>${w1 ? esc(w1.phone) : '-'}</td>
-          <td style="color: var(--green); font-weight: bold;">${w1 ? PRIZE_1.toFixed(2) + ' Birr' : '-'}</td>
+          <td style="color: var(--green); font-weight: bold;">${w1 ? round.prizes.p1.toFixed(2) + ' Birr' : '-'}</td>
         </tr>`;
 
-        // Row 2 (2nd place)
         html += `<tr>
-          <td class="place-2">🥈 2nd (${round.draw_2})</td>
+          <td class="place-2">🥈 2nd (${round.draw_2 || '-'})</td>
           <td>${w2 ? esc(w2.name) : '<span class="empty">No Winner</span>'}</td>
           <td>${w2 ? esc(w2.phone) : '-'}</td>
-          <td style="color: var(--green); font-weight: bold;">${w2 ? PRIZE_2.toFixed(2) + ' Birr' : '-'}</td>
+          <td style="color: var(--green); font-weight: bold;">${w2 ? round.prizes.p2.toFixed(2) + ' Birr' : '-'}</td>
         </tr>`;
 
-        // Row 3 (3rd place)
         html += `<tr>
-          <td class="place-3" style="border-bottom: 2px solid #555;">🥉 3rd (${round.draw_3})</td>
+          <td class="place-3" style="border-bottom: 2px solid #555;">🥉 3rd (${round.draw_3 || '-'})</td>
           <td style="border-bottom: 2px solid #555;">${w3 ? esc(w3.name) : '<span class="empty">No Winner</span>'}</td>
           <td style="border-bottom: 2px solid #555;">${w3 ? esc(w3.phone) : '-'}</td>
-          <td style="border-bottom: 2px solid #555; color: var(--green); font-weight: bold;">${w3 ? PRIZE_3.toFixed(2) + ' Birr' : '-'}</td>
+          <td style="border-bottom: 2px solid #555; color: var(--green); font-weight: bold;">${w3 ? round.prizes.p3.toFixed(2) + ' Birr' : '-'}</td>
         </tr>`;
       });
       
@@ -240,7 +233,7 @@
     if (!confirm('Close the current round and draw 3 winners?')) return;
     try {
       const data = await api('/api/admin/draw', { method: 'POST' });
-      alert(`Winning numbers: ${data.draw_1}, ${data.draw_2}, ${data.draw_3}`);
+      alert(`Round Finished!\n\nDraws: ${data.draw_1 || 'None'}, ${data.draw_2 || 'None'}, ${data.draw_3 || 'None'}\n\nTotal Pool: ${data.total_pool} Birr\n\n1st Prize: ${data.prize_1} Birr\n2nd Prize: ${data.prize_2} Birr\n3rd Prize: ${data.prize_3} Birr`);
       await refreshAll();
     } catch (e) { alert(e.message); }
   }
