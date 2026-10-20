@@ -22,10 +22,10 @@
   th, td { padding:8px; text-align:left; border-bottom:1px solid #343450; }
   th { color:#9aa; font-weight:600; }
   .empty { color:#888; font-style:italic; }
-  .draw { display:flex; gap:12px; margin:15px 0; }
-  .ball { width:60px; height:60px; border-radius:50%; background: var(--accent); color:#000; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:bold; }
   .btn-sm { padding:6px 12px; font-size:13px; }
   .hidden { display:none; }
+  .badge { background:#3b3b58; padding:2px 6px; border-radius:4px; font-size:12px; text-transform:uppercase; }
+  .proof-text { font-family: monospace; background: #1b1b2b; padding: 4px; border-radius: 4px; }
 </style>
 </head>
 <body>
@@ -44,8 +44,10 @@
   <div class="panel">
     <h2>Pending Transactions</h2>
     <table>
-      <thead><tr><th>Player</th><th>Phone</th><th>Type</th><th>Amount</th><th>Action</th></tr></thead>
-      <tbody id="txBody"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
+      <thead>
+        <tr><th>Player</th><th>Type / Amount</th><th>Details & Proof</th><th>Action</th></tr>
+      </thead>
+      <tbody id="txBody"><tr><td colspan="4" class="empty">Loading…</td></tr></tbody>
     </table>
   </div>
 
@@ -60,21 +62,12 @@
       <button onclick="draw()">Draw Winners</button>
       <button onclick="newRound()">Start New Round</button>
     </div>
-
-    <div id="drawResult" class="hidden">
-      <div class="draw"><div class="ball" id="b1">–</div><div class="ball" id="b2">–</div><div class="ball" id="b3">–</div></div>
-      <ul id="winnerList" style="padding-left:18px;"></ul>
-    </div>
   </div>
 </div>
 
 <script>
-  // ⚠️ CHANGE THIS TO YOUR DEPLOYED BACKEND URL
-  const LIVE_BACKEND_URL = 'https://phone45.vercel.app/';
-
-  const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-    ? 'http://localhost:3000' 
-    : LIVE_BACKEND_URL;
+  const LIVE_BACKEND_URL = 'https://phone45.vercel.app/'; // ⚠️ UPDATE THIS
+  const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:3000' : LIVE_BACKEND_URL;
 
   let adminKey = localStorage.getItem('dotBingoAdminKey') || '';
   let timer = null;
@@ -114,10 +107,28 @@
     try {
       const rows = await api('/api/admin/transactions');
       const body = $('txBody');
-      if (!rows.length) return body.innerHTML = '<tr><td colspan="5" class="empty">No pending transactions.</td></tr>';
-      body.innerHTML = rows.map(t => `<tr><td>${esc(t.users?.name)}</td><td>${esc(t.users?.phone)}</td><td>${esc(t.type)}</td><td>${Number(t.amount).toFixed(2)}</td><td><button class="btn-sm" onclick="resolve(${t.id},'approve')">Approve</button> <button class="btn-sm danger" onclick="resolve(${t.id},'reject')">Reject</button></td></tr>`).join('');
+      if (!rows.length) return body.innerHTML = '<tr><td colspan="4" class="empty">No pending transactions.</td></tr>';
+      
+      body.innerHTML = rows.map(t => {
+        let details = '';
+        if (t.type === 'deposit') {
+          details = `<b>Method:</b> ${esc(t.method)}<br><b>Proof (SMS):</b> <span class="proof-text">${esc(t.proof)}</span>`;
+        } else {
+          details = `<b>Method:</b> ${esc(t.method)}<br><b>Send To:</b> <span class="proof-text">${esc(t.account_details)}</span>`;
+        }
+
+        return `<tr>
+          <td>${esc(t.users?.name)}<br><small style="color:#aaa">${esc(t.users?.phone)}</small></td>
+          <td><b>${esc(t.type).toUpperCase()}</b><br>${Number(t.amount).toFixed(2)} Birr</td>
+          <td>${details}</td>
+          <td>
+            <button class="btn-sm" onclick="resolve(${t.id},'approve')">Approve</button><br>
+            <button class="btn-sm danger" style="margin-top:5px;" onclick="resolve(${t.id},'reject')">Reject</button>
+          </td>
+        </tr>`;
+      }).join('');
     } catch (e) {
-      $('txBody').innerHTML = `<tr><td colspan="5" class="empty">${esc(e.message)}</td></tr>`;
+      $('txBody').innerHTML = `<tr><td colspan="4" class="empty">${esc(e.message)}</td></tr>`;
     }
   }
 
@@ -146,13 +157,7 @@
     if (!confirm('Close the current round and draw 3 winners?')) return;
     try {
       const data = await api('/api/admin/draw', { method: 'POST' });
-      $('drawResult').classList.remove('hidden');
-      $('b1').textContent = data.draw_1;
-      $('b2').textContent = data.draw_2;
-      $('b3').textContent = data.draw_3;
-      $('winnerList').innerHTML = data.winners.length
-        ? data.winners.map(w => `<li>Card ${esc(w.card_number)} — ${esc(w.name)} (${esc(w.phone)})</li>`).join('')
-        : '<li>No winners this round.</li>';
+      alert(`Winning numbers: ${data.draw_1}, ${data.draw_2}, ${data.draw_3}`);
       await refreshAll();
     } catch (e) { alert(e.message); }
   }
@@ -162,7 +167,6 @@
     try {
       const data = await api('/api/admin/new-round', { method: 'POST' });
       alert(data.message);
-      $('drawResult').classList.add('hidden');
       await refreshAll();
     } catch (e) { alert(e.message); }
   }
