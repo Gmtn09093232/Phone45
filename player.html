@@ -50,8 +50,23 @@
   .tag.rejected { background: #c62828; color: #fff; }
   .tag.pending  { background: #f57c00; color: #fff; }
 
-  .win-balls { display: flex; justify-content: center; gap: 10px; margin: 10px 0; }
-  .ball { width: 45px; height: 45px; background: var(--accent); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; box-shadow: 0 4px 10px rgba(33, 150, 243, 0.4); }
+  /* Podium Styles */
+  .podium-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px; border-radius: 8px; margin-bottom: 10px;
+    background: var(--cell);
+  }
+  .podium-1 { border-left: 4px solid #FFD700; background: rgba(255, 215, 0, 0.1); }
+  .podium-2 { border-left: 4px solid #C0C0C0; background: rgba(192, 192, 192, 0.1); }
+  .podium-3 { border-left: 4px solid #CD7F32; background: rgba(205, 127, 50, 0.1); }
+  
+  .podium-left { display: flex; flex-direction: column; text-align: left; }
+  .podium-place { font-size: 12px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; }
+  .podium-num { font-size: 18px; font-weight: bold; color: #fff; }
+  .podium-right { text-align: right; font-size: 14px; }
+  .podium-winner { font-weight: bold; color: #fff; }
+  .podium-phone { font-size: 12px; color: var(--text-muted); }
+  .no-winner { color: var(--text-muted); font-style: italic; }
 
   .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--panel); display: flex; justify-content: space-around; padding: 10px 5px 15px; border-top: 1px solid #2a2a40; z-index: 100; }
   .nav-item { background: transparent; border: none; color: var(--text-muted); font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 12px; border-radius: 12px; margin: 0; width: auto; cursor: pointer; transition: 0.3s; font-weight: 600; }
@@ -346,41 +361,69 @@
       }
 
       list.innerHTML = data.map(round => {
-        let winnersHtml = '';
-        if (!round.winners || round.winners.length === 0) {
-          winnersHtml = '<li><span style="color: var(--text-muted);">No players won this round.</span></li>';
-        } else {
-          winnersHtml = round.winners.map(w => {
-            // Safely extract name/phone whether Supabase sends an object or array
-            const name = w.users?.name || w.users?.[0]?.name || 'Unknown';
-            const phone = w.users?.phone || w.users?.[0]?.phone || '';
-            return `
-              <li>
-                <span><b>Card ${w.card_number}</b></span>
-                <span>${esc(name)}</span>
-                <span style="color: var(--text-muted); font-size: 12px;">${esc(phone)}</span>
-              </li>
-            `;
-          }).join('');
-        }
+        // Helper function to find winner details for a specific drawn number
+        const getWinnerData = (drawNum) => {
+          if (!round.winners) return null;
+          const w = round.winners.find(x => x.card_number === drawNum);
+          if (!w) return null;
+          return {
+            name: w.users?.name || w.users?.[0]?.name || 'Unknown',
+            phone: w.users?.phone || w.users?.[0]?.phone || ''
+          };
+        };
+
+        const w1 = getWinnerData(round.draw_1);
+        const w2 = getWinnerData(round.draw_2);
+        const w3 = getWinnerData(round.draw_3);
 
         return `
-          <div style="margin-bottom: 25px; border-bottom: 1px solid var(--cell); padding-bottom: 15px;">
-            <h4 style="margin-bottom: 10px; font-size: 16px;">Round #${round.round_id}</h4>
-            <div class="win-balls">
-              <div class="ball">${round.draw_1}</div>
-              <div class="ball">${round.draw_2}</div>
-              <div class="ball">${round.draw_3}</div>
+          <div style="margin-bottom: 25px; background: #1e1e2f; border-radius: 10px; padding: 15px; border: 1px solid #3b3b58;">
+            <h4 style="margin-bottom: 15px; font-size: 16px; text-align: center; color: var(--accent);">Round #${round.round_id}</h4>
+            
+            <!-- 1st Place -->
+            <div class="podium-item podium-1">
+              <div class="podium-left">
+                <span class="podium-place">🥇 1st Draw</span>
+                <span class="podium-num">Number ${round.draw_1}</span>
+              </div>
+              <div class="podium-right">
+                ${w1 
+                  ? `<div class="podium-winner">${esc(w1.name)}</div><div class="podium-phone">${esc(w1.phone)}</div>` 
+                  : `<span class="no-winner">No Winner</span>`}
+              </div>
             </div>
-            <ul class="list" style="margin-top: 10px;">
-              ${winnersHtml}
-            </ul>
+
+            <!-- 2nd Place -->
+            <div class="podium-item podium-2">
+              <div class="podium-left">
+                <span class="podium-place">🥈 2nd Draw</span>
+                <span class="podium-num">Number ${round.draw_2}</span>
+              </div>
+              <div class="podium-right">
+                ${w2 
+                  ? `<div class="podium-winner">${esc(w2.name)}</div><div class="podium-phone">${esc(w2.phone)}</div>` 
+                  : `<span class="no-winner">No Winner</span>`}
+              </div>
+            </div>
+
+            <!-- 3rd Place -->
+            <div class="podium-item podium-3">
+              <div class="podium-left">
+                <span class="podium-place">🥉 3rd Draw</span>
+                <span class="podium-num">Number ${round.draw_3}</span>
+              </div>
+              <div class="podium-right">
+                ${w3 
+                  ? `<div class="podium-winner">${esc(w3.name)}</div><div class="podium-phone">${esc(w3.phone)}</div>` 
+                  : `<span class="no-winner">No Winner</span>`}
+              </div>
+            </div>
+
           </div>
         `;
       }).join('');
     } catch (e) { 
       console.error(e); 
-      // Show the exact error on screen if it fails
       list.innerHTML = `<p style="text-align: center; color: var(--red); padding: 10px;">Error loading winners: ${e.message}</p>`; 
     }
   }
