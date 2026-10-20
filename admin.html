@@ -6,37 +6,58 @@
 <title>Dot Bingo — Admin</title>
 <style>
   :root { --bg:#161622; --panel:#242438; --accent:#FF9800; --green:#4CAF50; --red:#e53935; --blue:#2196F3; }
-  * { box-sizing: border-box; }
-  body { font-family: system-ui, sans-serif; background: var(--bg); color:#fff; margin:0; padding:20px; }
-  h1 { text-align:center; margin-top:0; }
-  .panel { background: var(--panel); padding:20px; border-radius:10px; max-width:820px; margin:0 auto 20px; }
-  h2 { margin-top:0; font-size:18px; color: var(--accent); }
-  input, button { padding:10px; border-radius:5px; border:none; font-size:15px; }
-  input { background:#1b1b2b; color:#fff; width:100%; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: system-ui, sans-serif; background: var(--bg); color:#fff; padding:15px; }
+  h1 { text-align:center; font-size: 22px; margin-bottom: 20px; }
+  .panel { background: var(--panel); padding:15px; border-radius:10px; margin:0 auto 15px; max-width: 900px; }
+  h2 { margin-bottom: 15px; font-size:18px; color: var(--accent); }
+  
+  /* Fix Inputs on iOS */
+  input, button { padding: 12px; border-radius:6px; border:none; font-size:16px; }
+  input { background:#1b1b2b; color:#fff; width:100%; margin-bottom: 10px; border: 1px solid #3b3b58; }
   button { background: var(--green); color:#fff; cursor:pointer; font-weight:bold; transition: 0.2s; }
-  button:active { transform: scale(0.98); }
+  button:active { transform: scale(0.98); opacity: 0.9; }
   button:disabled { background: gray; cursor:not-allowed; transform:none; }
   button.danger { background: var(--red); }
   button.blue { background: var(--blue); }
-  .row { display:flex; gap:10px; align-items:center; }
-  .row > input { flex:1; }
-  table { width:100%; border-collapse:collapse; font-size:14px; }
-  th, td { padding:10px 8px; text-align:left; border-bottom:1px solid #343450; }
-  th { color:#9aa; font-weight:600; }
-  .empty { color:#888; font-style:italic; }
-  .btn-sm { padding:6px 12px; font-size:13px; }
+  button.accent { background: var(--accent); color: #000; }
+
+  /* Stack rows on mobile */
+  .row { display:flex; flex-direction: column; gap:10px; margin-top: 15px; }
+  .row-btn { display: flex; gap: 10px; flex-direction: column; margin-top: 15px; }
+  
+  /* Mobile-friendly scrollable tables */
+  .table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; min-width: 500px; /* Forces scroll on small screens instead of squishing */ }
+  th, td { padding:12px 8px; text-align:left; border-bottom:1px solid #343450; }
+  th { color:#9aa; font-weight:600; white-space: nowrap; }
+  .empty { color:#888; font-style:italic; text-align: center; }
+  
+  .btn-sm { padding:8px 12px; font-size:13px; width: 100%; margin-bottom: 5px; }
   .hidden { display:none; }
   .badge { background:#3b3b58; padding:2px 6px; border-radius:4px; font-size:12px; text-transform:uppercase; }
-  .proof-text { font-family: monospace; background: #1b1b2b; padding: 4px 8px; border-radius: 4px; font-size: 13px; border: 1px solid #3b3b58; }
+  .proof-text { font-family: monospace; background: #1b1b2b; padding: 6px; border-radius: 4px; font-size: 12px; border: 1px solid #3b3b58; display: inline-block; margin-top: 4px; word-break: break-all;}
   
-  .place-1 { color: #FFD700; font-weight: bold; }
-  .place-2 { color: #C0C0C0; font-weight: bold; }
-  .place-3 { color: #CD7F32; font-weight: bold; }
+  .place-1 { color: #FFD700; font-weight: bold; white-space: nowrap; }
+  .place-2 { color: #C0C0C0; font-weight: bold; white-space: nowrap; }
+  .place-3 { color: #CD7F32; font-weight: bold; white-space: nowrap; }
+  
+  .user-info-cell { font-size: 13px; }
+  .user-info-cell small { color: #aaa; display: block; margin-top: 4px; }
+
+  /* Desktop Adjustments */
+  @media (min-width: 600px) {
+    .row { flex-direction: row; align-items: center; }
+    .row > input { flex: 1; margin-bottom: 0; }
+    .row-btn { flex-direction: row; }
+    .btn-sm { width: auto; margin-bottom: 0; margin-right: 5px; }
+    table { min-width: 100%; }
+  }
 </style>
 </head>
 <body>
 
-<h1>Admin</h1>
+<h1>Dot Bingo — Admin</h1>
 
 <div class="panel" id="authPanel">
   <h2>Admin Key</h2>
@@ -51,24 +72,28 @@
   <!-- PENDING TRANSACTIONS -->
   <div class="panel">
     <h2>Pending Transactions</h2>
-    <table>
-      <thead>
-        <tr><th>Player</th><th>Type / Amount</th><th>Details & Proof</th><th>Action</th></tr>
-      </thead>
-      <tbody id="txBody"><tr><td colspan="4" class="empty">Loading…</td></tr></tbody>
-    </table>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Player</th><th>Type / Amount</th><th>Details & Proof</th><th>Action</th></tr>
+        </thead>
+        <tbody id="txBody"><tr><td colspan="4" class="empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
   </div>
 
   <!-- ACTIVE ROUND & CONTROLS -->
   <div class="panel">
     <h2>Active Round Players</h2>
-    <table>
-      <thead><tr><th>Card</th><th>Name</th><th>Phone</th></tr></thead>
-      <tbody id="playerBody"><tr><td colspan="3" class="empty">Loading…</td></tr></tbody>
-    </table>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Card</th><th>Name</th><th>Phone</th></tr></thead>
+        <tbody id="playerBody"><tr><td colspan="3" class="empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
 
-    <div class="row" style="margin-top:20px;">
-      <button onclick="draw()" style="background: var(--accent); color: #000;">Draw Winners</button>
+    <div class="row-btn">
+      <button onclick="draw()" class="accent">Draw Winners</button>
       <button onclick="newRound()" class="blue">Start New Round</button>
     </div>
   </div>
@@ -76,12 +101,14 @@
   <!-- PAST WINNERS LIST -->
   <div class="panel">
     <h2>Past Winners & History</h2>
-    <table>
-      <thead>
-        <tr><th>Round</th><th>Place</th><th>Winner</th><th>Phone</th><th>Prize Amount</th></tr>
-      </thead>
-      <tbody id="winnersBody"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
-    </table>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Round</th><th>Place</th><th>Winner</th><th>Phone</th><th>Prize Amount</th></tr>
+        </thead>
+        <tbody id="winnersBody"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
   </div>
 
 </div>
@@ -133,18 +160,21 @@
       body.innerHTML = rows.map(t => {
         let details = '';
         if (t.type === 'deposit') {
-          details = `<b>Method:</b> ${esc(t.method)}<br><b>Proof (SMS):</b> <span class="proof-text">${esc(t.proof)}</span>`;
+          details = `<b>Method:</b> ${esc(t.method)}<br><span class="proof-text">${esc(t.proof)}</span>`;
         } else {
-          details = `<b>Method:</b> ${esc(t.method)}<br><b>Send To:</b> <span class="proof-text">${esc(t.account_details)}</span>`;
+          details = `<b>Method:</b> ${esc(t.method)}<br><span class="proof-text">${esc(t.account_details)}</span>`;
         }
 
         return `<tr>
-          <td>${esc(t.users?.name)}<br><small style="color:#aaa">${esc(t.users?.phone)}</small></td>
-          <td><b>${esc(t.type).toUpperCase()}</b><br>${Number(t.amount).toFixed(2)} Birr</td>
+          <td class="user-info-cell">
+            <b>${esc(t.users?.name)}</b>
+            <small>${esc(t.users?.phone)}</small>
+          </td>
+          <td><b style="color:var(--accent)">${esc(t.type).toUpperCase()}</b><br>${Number(t.amount).toFixed(2)} Birr</td>
           <td>${details}</td>
           <td>
-            <button class="btn-sm" onclick="resolve(${t.id},'approve')">Approve</button><br>
-            <button class="btn-sm danger" style="margin-top:5px;" onclick="resolve(${t.id},'reject')">Reject</button>
+            <button class="btn-sm" onclick="resolve(${t.id},'approve')">Approve</button>
+            <button class="btn-sm danger" onclick="resolve(${t.id},'reject')">Reject</button>
           </td>
         </tr>`;
       }).join('');
@@ -168,7 +198,7 @@
       const body = $('playerBody');
       if (!round) return body.innerHTML = '<tr><td colspan="3" class="empty">No active round.</td></tr>';
       if (!players.length) return body.innerHTML = '<tr><td colspan="3" class="empty">No players in this round yet.</td></tr>';
-      body.innerHTML = players.map(p => `<tr><td>${esc(p.card_number)}</td><td>${esc(p.users?.name)}</td><td>${esc(p.users?.phone)}</td></tr>`).join('');
+      body.innerHTML = players.map(p => `<tr><td><b>${esc(p.card_number)}</b></td><td>${esc(p.users?.name)}</td><td>${esc(p.users?.phone)}</td></tr>`).join('');
     } catch (e) {
       $('playerBody').innerHTML = `<tr><td colspan="3" class="empty">${esc(e.message)}</td></tr>`;
     }
@@ -199,8 +229,8 @@
 
         html += `<tr>
           <td rowspan="3" style="vertical-align:top; font-weight:bold; border-bottom: 2px solid #555;">
-            Round<br>#${round.round_id}<br>
-            <small style="color:#aaa; font-weight:normal;">${round.total_players} players</small>
+            #${round.round_id}<br>
+            <small style="color:#aaa; font-weight:normal; font-size:11px;">${round.total_players} players</small>
           </td>
           <td class="place-1">🥇 1st (${round.draw_1 || '-'})</td>
           <td>${w1 ? esc(w1.name) : '<span class="empty">No Winner</span>'}</td>
