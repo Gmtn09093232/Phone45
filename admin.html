@@ -2,17 +2,25 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Dot Bingo — Admin</title>
 <style>
-  :root { --bg:#161622; --panel:#242438; --accent:#FF9800; --green:#4CAF50; --red:#e53935; --blue:#2196F3; }
+  :root { --bg:#161622; --panel:#242438; --accent:#FF9800; --green:#4CAF50; --red:#e53935; --blue:#2196F3; --text:#fff; --text-muted:#888; }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body { font-family: system-ui, sans-serif; background: var(--bg); color:#fff; padding:15px; }
+  
+  /* Added bottom padding to prevent bottom nav from covering content */
+  body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 15px; padding-bottom: 80px; }
+  
   h1 { text-align:center; font-size: 22px; margin-bottom: 20px; }
   .panel { background: var(--panel); padding:15px; border-radius:10px; margin:0 auto 15px; max-width: 900px; }
   h2 { margin-bottom: 15px; font-size:18px; color: var(--accent); }
   
-  /* Fix Inputs on iOS */
+  /* View Switching */
+  .view { display: none; animation: fadeIn 0.3s ease; }
+  .view.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Inputs & Buttons */
   input, button { padding: 12px; border-radius:6px; border:none; font-size:16px; }
   input { background:#1b1b2b; color:#fff; width:100%; margin-bottom: 10px; border: 1px solid #3b3b58; }
   button { background: var(--green); color:#fff; cursor:pointer; font-weight:bold; transition: 0.2s; }
@@ -22,19 +30,18 @@
   button.blue { background: var(--blue); }
   button.accent { background: var(--accent); color: #000; }
 
-  /* Stack rows on mobile */
   .row { display:flex; flex-direction: column; gap:10px; margin-top: 15px; }
   .row-btn { display: flex; gap: 10px; flex-direction: column; margin-top: 15px; }
   
   /* Mobile-friendly scrollable tables */
   .table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; }
-  table { width:100%; border-collapse:collapse; font-size:14px; min-width: 500px; /* Forces scroll on small screens instead of squishing */ }
+  table { width:100%; border-collapse:collapse; font-size:14px; min-width: 500px; }
   th, td { padding:12px 8px; text-align:left; border-bottom:1px solid #343450; }
   th { color:#9aa; font-weight:600; white-space: nowrap; }
-  .empty { color:#888; font-style:italic; text-align: center; }
+  .empty { color:#888; font-style:italic; text-align: center; padding: 20px; }
   
   .btn-sm { padding:8px 12px; font-size:13px; width: 100%; margin-bottom: 5px; }
-  .hidden { display:none; }
+  .hidden { display:none !important; }
   .badge { background:#3b3b58; padding:2px 6px; border-radius:4px; font-size:12px; text-transform:uppercase; }
   .proof-text { font-family: monospace; background: #1b1b2b; padding: 6px; border-radius: 4px; font-size: 12px; border: 1px solid #3b3b58; display: inline-block; margin-top: 4px; word-break: break-all;}
   
@@ -45,6 +52,12 @@
   .user-info-cell { font-size: 13px; }
   .user-info-cell small { color: #aaa; display: block; margin-top: 4px; }
 
+  /* Bottom Navigation Bar */
+  .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--panel); display: flex; justify-content: space-around; padding: 8px 5px 15px; border-top: 1px solid #2a2a40; z-index: 100; box-shadow: 0 -2px 10px rgba(0,0,0,0.3); }
+  .nav-item { background: transparent; border: none; color: var(--text-muted); font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 12px; border-radius: 12px; margin: 0; width: auto; cursor: pointer; transition: 0.3s; font-weight: 600; }
+  .nav-item svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .nav-item.active { background: var(--accent); color: #000; box-shadow: 0 4px 10px rgba(255, 152, 0, 0.3); }
+
   /* Desktop Adjustments */
   @media (min-width: 600px) {
     .row { flex-direction: row; align-items: center; }
@@ -52,6 +65,7 @@
     .row-btn { flex-direction: row; }
     .btn-sm { width: auto; margin-bottom: 0; margin-right: 5px; }
     table { min-width: 100%; }
+    .bottom-nav { max-width: 600px; left: 50%; transform: translateX(-50%); border-radius: 20px 20px 0 0; border: 1px solid #2a2a40; border-bottom: none; }
   }
 </style>
 </head>
@@ -59,6 +73,7 @@
 
 <h1>Dot Bingo — Admin</h1>
 
+<!-- AUTH PANEL -->
 <div class="panel" id="authPanel">
   <h2>Admin Key</h2>
   <div class="row">
@@ -67,48 +82,71 @@
   </div>
 </div>
 
+<!-- MAIN APP -->
 <div id="adminPanel" class="hidden">
   
-  <!-- PENDING TRANSACTIONS -->
-  <div class="panel">
-    <h2>Pending Transactions</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>Player</th><th>Type / Amount</th><th>Details & Proof</th><th>Action</th></tr>
-        </thead>
-        <tbody id="txBody"><tr><td colspan="4" class="empty">Loading…</td></tr></tbody>
-      </table>
+  <!-- TAB 1: PENDING TRANSACTIONS -->
+  <div id="view-transactions" class="view active">
+    <div class="panel">
+      <h2>Pending Transactions</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Player</th><th>Type / Amount</th><th>Details & Proof</th><th>Action</th></tr>
+          </thead>
+          <tbody id="txBody"><tr><td colspan="4" class="empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <!-- ACTIVE ROUND & CONTROLS -->
-  <div class="panel">
-    <h2>Active Round Players</h2>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Card</th><th>Name</th><th>Phone</th></tr></thead>
-        <tbody id="playerBody"><tr><td colspan="3" class="empty">Loading…</td></tr></tbody>
-      </table>
-    </div>
+  <!-- TAB 2: ACTIVE ROUND PLAYERS -->
+  <div id="view-players" class="view">
+    <div class="panel">
+      <h2>Active Round Players</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Card</th><th>Name</th><th>Phone</th></tr></thead>
+          <tbody id="playerBody"><tr><td colspan="3" class="empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
 
-    <div class="row-btn">
-      <button onclick="draw()" class="accent">Draw Winners</button>
-      <button onclick="newRound()" class="blue">Start New Round</button>
+      <div class="row-btn" style="margin-top: 20px;">
+        <button onclick="draw()" class="accent">Draw Winners & Close Round</button>
+        <button onclick="newRound()" class="blue">Start New Round</button>
+      </div>
     </div>
   </div>
 
-  <!-- PAST WINNERS LIST -->
-  <div class="panel">
-    <h2>Past Winners & History</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>Round</th><th>Place</th><th>Winner</th><th>Phone</th><th>Prize Amount</th></tr>
-        </thead>
-        <tbody id="winnersBody"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
-      </table>
+  <!-- TAB 3: PAST WINNERS & HISTORY -->
+  <div id="view-winners" class="view">
+    <div class="panel">
+      <h2>Past Winners & History</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Round</th><th>Place</th><th>Winner</th><th>Phone</th><th>Prize Amount</th></tr>
+          </thead>
+          <tbody id="winnersBody"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
     </div>
+  </div>
+
+  <!-- BOTTOM NAVIGATION BAR -->
+  <div class="bottom-nav">
+    <button class="nav-item active" id="nav-transactions" onclick="switchView('transactions')">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+      Requests
+    </button>
+    <button class="nav-item" id="nav-players" onclick="switchView('players')">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+      Active Game
+    </button>
+    <button class="nav-item" id="nav-winners" onclick="switchView('winners')">
+      <svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+      Winners
+    </button>
   </div>
 
 </div>
@@ -132,6 +170,20 @@
     return data;
   }
 
+  // --- UI NAVIGATION LOGIC ---
+  function switchView(viewName) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    
+    $(`view-${viewName}`).classList.add('active');
+    $(`nav-${viewName}`).classList.add('active');
+
+    // Optional: refresh specific data on tab click
+    if (viewName === 'transactions') loadTransactions();
+    if (viewName === 'players') loadPlayers();
+    if (viewName === 'winners') loadWinners();
+  }
+
   function saveKey() {
     adminKey = $('adminKey').value.trim();
     if (!adminKey) return alert('Enter the admin key.');
@@ -144,7 +196,7 @@
     $('adminPanel').classList.remove('hidden');
     refreshAll();
     clearInterval(timer);
-    timer = setInterval(refreshAll, 5000);
+    timer = setInterval(refreshAll, 5000); // Auto-refresh every 5 seconds
   }
 
   async function refreshAll() {
@@ -264,6 +316,9 @@
     try {
       const data = await api('/api/admin/draw', { method: 'POST' });
       alert(`Round Finished!\n\nDraws: ${data.draw_1 || 'None'}, ${data.draw_2 || 'None'}, ${data.draw_3 || 'None'}\n\nTotal Pool: ${data.total_pool} Birr\n\n1st Prize: ${data.prize_1} Birr\n2nd Prize: ${data.prize_2} Birr\n3rd Prize: ${data.prize_3} Birr`);
+      
+      // Auto switch to winners tab after drawing
+      switchView('winners');
       await refreshAll();
     } catch (e) { alert(e.message); }
   }
@@ -273,6 +328,9 @@
     try {
       const data = await api('/api/admin/new-round', { method: 'POST' });
       alert(data.message);
+      
+      // Auto switch to players tab after starting new round
+      switchView('players');
       await refreshAll();
     } catch (e) { alert(e.message); }
   }
