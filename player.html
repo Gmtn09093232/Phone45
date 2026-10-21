@@ -8,14 +8,12 @@
   :root { --bg: #12121f; --panel: #1e1e2f; --cell: #2a2a40; --accent: #2196F3; --green: #4CAF50; --red: #f44336; --text: #ffffff; --text-muted: #888; }
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
   body { background: var(--bg); color: var(--text); padding-bottom: 85px; }
-  
+
   .top-bar { background: var(--panel); padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
   .user-info { text-align: left; font-size: 14px; flex: 1; }
   .user-info span { color: var(--text-muted); font-size: 12px; }
   .balance-box { text-align: right; flex: 1; }
   .balance-box b { color: var(--green); font-size: 20px; }
-  
-  /* Language Toggle */
   .lang-toggle { background: var(--cell); border: 1px solid #3b3b58; color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; margin: 0 10px; }
 
   .view { display: none; padding: 15px; max-width: 600px; margin: 0 auto; animation: fadeIn 0.3s ease; }
@@ -44,7 +42,7 @@
   .num { background: var(--cell); padding: 10px 0; cursor: pointer; border-radius: 4px; font-size: 13px; text-align: center; user-select: none; transition: 0.1s; }
   .num.selected { background: var(--accent); color: #fff; font-weight: bold; box-shadow: 0 0 8px rgba(33, 150, 243, 0.5); }
   .num.taken { background: #1a1a2e; color: #444; cursor: not-allowed; text-decoration: line-through; }
-  
+
   ul.list { list-style: none; width: 100%; }
   ul.list li { padding: 14px 0; border-bottom: 1px solid var(--cell); display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
   ul.list li:last-child { border-bottom: none; }
@@ -57,7 +55,6 @@
   .podium-1 { border-left: 4px solid #FFD700; background: rgba(255, 215, 0, 0.1); }
   .podium-2 { border-left: 4px solid #C0C0C0; background: rgba(192, 192, 192, 0.1); }
   .podium-3 { border-left: 4px solid #CD7F32; background: rgba(205, 127, 50, 0.1); }
-  
   .podium-left { display: flex; flex-direction: column; text-align: left; }
   .podium-place { font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; }
   .podium-num { font-size: 16px; font-weight: bold; color: #fff; margin-top: 2px; }
@@ -74,14 +71,55 @@
   #loginScreen { display: flex; flex-direction: column; justify-content: center; height: 100vh; padding: 20px; max-width: 400px; margin: 0 auto; }
   .hidden { display: none !important; }
   .highlight { border: 2px solid var(--accent); box-shadow: 0 0 15px rgba(33, 150, 243, 0.5); transition: 0.3s; }
-
-  /* Rules List */
   .rules-list { text-align: left; line-height: 1.6; font-size: 14px; color: #ccc; }
   .rules-list li { margin-bottom: 12px; list-style-type: decimal; margin-left: 20px; }
+
+  /* ===== MULTI HOT — Last Draw widget ===== */
+  .last-draw-widget { background: linear-gradient(135deg, #2a1a3f 0%, #1e1e2f 100%); border: 1px solid #ff9800; border-radius: 12px; padding: 12px 14px; margin-bottom: 15px; cursor: pointer; transition: 0.2s; }
+  .last-draw-widget:active { transform: scale(0.98); }
+  .ldw-label { font-size: 10px; color: #ff9800; font-weight: bold; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .ldw-icon { font-size: 14px; }
+  .ldw-round { margin-left: auto; font-size: 10px; color: var(--text-muted); font-weight: normal; }
+  .ldw-nums { display: flex; gap: 8px; }
+  .ldw-num { flex: 1; text-align: center; font-size: 20px; font-weight: 900; color: #ffeb3b; background: #050510; border: 2px solid #ff9800; border-radius: 8px; padding: 6px 0; font-family: 'Courier New', monospace; text-shadow: 0 0 8px rgba(255,235,59,0.5); }
+  .ldw-sub { font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 8px; }
+
+  /* ===== Slot modal ===== */
+  .slot-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 15px; animation: fadeIn 0.25s; }
+  .slot-modal-inner { width: 100%; max-width: 460px; }
+  .slot-machine { background: linear-gradient(180deg, #2a0a1a 0%, #12121f 100%); border-radius: 16px; padding: 20px 16px; border: 2px solid #ff9800; box-shadow: 0 0 40px rgba(255, 152, 0, 0.35); }
+  .slot-header { text-align: center; margin-bottom: 16px; }
+  .slot-title { font-size: 24px; font-weight: 900; letter-spacing: 3px; background: linear-gradient(90deg, #ff9800, #ffeb3b, #ff9800); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .slot-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .slot-windows { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  .slot-window { background: #050510; border: 3px solid #ff9800; border-radius: 12px; padding: 8px 4px; text-align: center; overflow: hidden; box-shadow: inset 0 0 20px rgba(255, 152, 0, 0.2); transition: border-color 0.3s, box-shadow 0.3s; }
+  .slot-window-label { font-size: 10px; color: #ff9800; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .slot-number { font-size: 34px; font-weight: 900; color: #fff; height: 48px; line-height: 48px; font-family: 'Courier New', monospace; text-shadow: 0 0 10px rgba(255, 235, 59, 0.7); }
+  .slot-window.spinning .slot-number { color: #ffeb3b; animation: slotBlur 0.08s linear infinite; }
+  @keyframes slotBlur {
+    0%   { transform: translateY(-6px); opacity: 0.7; }
+    50%  { transform: translateY(6px);  opacity: 1; }
+    100% { transform: translateY(-6px); opacity: 0.7; }
+  }
+  .slot-window.winner { border-color: #4CAF50; box-shadow: 0 0 25px rgba(76, 175, 80, 0.8), inset 0 0 20px rgba(76, 175, 80, 0.3); }
+  .slot-window.winner .slot-number { color: #4CAF50; text-shadow: 0 0 14px rgba(76, 175, 80, 0.9); }
+  .slot-result { text-align: center; min-height: 44px; }
+  .slot-result-round { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+  .slot-result-nums { font-size: 20px; font-weight: 900; color: #ffeb3b; letter-spacing: 4px; text-shadow: 0 0 12px rgba(255, 235, 59, 0.6); }
+  .slot-close-btn { width: 100%; margin-top: 14px; padding: 14px; border-radius: 8px; background: var(--accent); color: #fff; font-weight: bold; font-size: 15px; border: none; cursor: pointer; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .slot-window.spinning .slot-number { animation: none; }
+    .view { animation: none; }
+  }
+  @media (max-width: 360px) {
+    .slot-number { font-size: 26px; height: 42px; line-height: 42px; }
+  }
 </style>
 </head>
 <body>
 
+<!-- LOGIN -->
 <div id="loginScreen">
   <div class="panel" style="padding: 30px 20px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
@@ -94,8 +132,9 @@
   </div>
 </div>
 
+<!-- APP -->
 <div id="appScreen" class="hidden">
-  
+
   <div class="top-bar">
     <div class="user-info">
       <span data-i18n="welcome">Welcome,</span><br>
@@ -119,6 +158,21 @@
         <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         <span data-i18n="withdraw">Withdraw</span>
       </button>
+    </div>
+
+    <!-- MULTI HOT — Last Draw widget -->
+    <div class="last-draw-widget" id="lastDrawWidget" style="display:none;" onclick="replayLastDraw()">
+      <div class="ldw-label">
+        <span class="ldw-icon">🎰</span>
+        <span data-i18n="lastDraw">MULTI HOT — Last Draw</span>
+        <span class="ldw-round" id="ldwRound"></span>
+      </div>
+      <div class="ldw-nums">
+        <div class="ldw-num" id="ldw1">?</div>
+        <div class="ldw-num" id="ldw2">?</div>
+        <div class="ldw-num" id="ldw3">?</div>
+      </div>
+      <div class="ldw-sub" data-i18n="tapToReplay">Tap to replay the draw animation</div>
     </div>
 
     <div class="panel">
@@ -156,7 +210,7 @@
       <h2 data-i18n="depositTitle">💰 Deposit</h2>
       <div style="background: var(--cell); padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; border-left: 3px solid var(--green); line-height: 1.6;">
         <b>Telebirr:</b> 0912345678 <br>
-        <b>CBE:</b> 1000123456789 
+        <b>CBE:</b> 1000123456789
       </div>
       <input type="number" id="depAmount" placeholder="Amount (Birr)" min="1" data-i18n-ph="amount">
       <select id="depMethod">
@@ -183,13 +237,11 @@
   <div id="view-rules" class="view">
     <div class="panel">
       <h2 data-i18n="rulesTitle">Game Rules</h2>
-      <ul class="rules-list" id="rulesList">
-        <!-- Rules populated by JS -->
-      </ul>
+      <ul class="rules-list" id="rulesList"></ul>
     </div>
   </div>
 
-  <!-- BOTTOM NAVIGATION -->
+  <!-- BOTTOM NAV -->
   <div class="bottom-nav">
     <button class="nav-item active" id="nav-play" onclick="switchView('play')">
       <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
@@ -215,8 +267,36 @@
 
 </div>
 
+<!-- SLOT ANIMATION MODAL -->
+<div id="slotModal" class="slot-modal hidden">
+  <div class="slot-modal-inner">
+    <div class="slot-machine">
+      <div class="slot-header">
+        <div class="slot-title">MULTI HOT</div>
+        <div class="slot-subtitle" id="slotModalSub">Drawing winners...</div>
+      </div>
+      <div class="slot-windows">
+        <div class="slot-window" id="mslot1">
+          <div class="slot-window-label" data-i18n="first">1st</div>
+          <div class="slot-number">?</div>
+        </div>
+        <div class="slot-window" id="mslot2">
+          <div class="slot-window-label" data-i18n="second">2nd</div>
+          <div class="slot-number">?</div>
+        </div>
+        <div class="slot-window" id="mslot3">
+          <div class="slot-window-label" data-i18n="third">3rd</div>
+          <div class="slot-number">?</div>
+        </div>
+      </div>
+      <div class="slot-result" id="mslotResult"></div>
+      <button id="slotCloseBtn" class="slot-close-btn hidden" onclick="closeSlotModal()" data-i18n="close">Close</button>
+    </div>
+  </div>
+</div>
+
 <script>
-  const LIVE_BACKEND_URL = 'https://phone45.vercel.app/'; // ⚠️ UPDATE THIS
+  const LIVE_BACKEND_URL = 'https://phone45.vercel.app/';
   const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:3000' : LIVE_BACKEND_URL;
 
   const CARD_PRICE = 100;
@@ -224,145 +304,98 @@
   let selectedNums = new Set();
   let takenNumbers = new Set();
   let pollTimer = null;
-  
-  // Translation State
+
   let currentLang = localStorage.getItem('dotBingoLang') || 'en';
+
+  // MULTI HOT draw-detection state
+  let lastSeenDrawId = null;
+  let baselineInitialized = false;
+  let lastKnownDraw = null;
 
   const $ = (id) => document.getElementById(id);
 
-  // --- TRANSLATION DICTIONARY ---
+  // ===== TRANSLATIONS =====
   const translations = {
     en: {
-      title: ">Number gaming",
-      fullName: "Full Name",
+      title: ">Number gaming", fullName: "Full Name",
       phone: "Phone Number (09... or +251...)",
       loginBtn: "Login / Register",
-      welcome: "Welcome,",
-      balance: "Balance",
-      birr: "Birr",
-      deposit: "Deposit",
-      withdraw: "Withdraw",
-      selectCards: "Select Cards (100 Birr Each)",
-      noCards: "No cards selected",
-      payAndPlay: "Pay & Play",
-      winnersResults: "Winners & Results",
-      loading: "Loading results...",
-      myActivity: "My Activity (Last 10)",
+      welcome: "Welcome,", balance: "Balance", birr: "Birr",
+      deposit: "Deposit", withdraw: "Withdraw",
+      selectCards: "Select Cards (100 Birr Each)", noCards: "No cards selected",
+      payAndPlay: "Pay & Play", winnersResults: "Winners & Results",
+      loading: "Loading results...", myActivity: "My Activity (Last 10)",
       noActivity: "No recent activity.",
-      depositTitle: "💰 Deposit",
-      amount: "Amount (Birr)",
-      proof: "Transaction ID / SMS Reference",
-      submitDeposit: "Submit Deposit",
-      withdrawTitle: "💸 Withdraw",
-      account: "Account Number / Phone Number",
-      submitWithdraw: "Submit Withdraw",
-      rulesTitle: "Game Rules",
-      navPlay: "Play",
-      navWinners: "Winners",
-      navActivity: "Activity",
-      navWallet: "Wallet",
-      navRules: "Rules",
-      
-      // Dynamic Strings
-      round: "Round",
-      cardsSold: "Cards Sold",
+      depositTitle: "💰 Deposit", amount: "Amount (Birr)",
+      proof: "Transaction ID / SMS Reference", submitDeposit: "Submit Deposit",
+      withdrawTitle: "💸 Withdraw", account: "Account Number / Phone Number",
+      submitWithdraw: "Submit Withdraw", rulesTitle: "Game Rules",
+      navPlay: "Play", navWinners: "Winners", navActivity: "Activity",
+      navWallet: "Wallet", navRules: "Rules",
+      round: "Round", cardsSold: "Cards Sold",
       noActiveRound: "No active round. Buy a card to start!",
-      selected: "card(s) selected:",
-      need: "Need",
-      processing: "Processing...",
-      joinPrompt: "Join round with",
-      joinPrompt2: "card(s) for",
-      players: "Players",
-      pool: "Pool",
-      firstPlace: "1st Place (60%)",
-      secondPlace: "2nd Place (10%)",
-      thirdPlace: "3rd Place (5%)",
-      noWinner: "No Winner",
-      noRounds: "No finished rounds yet.",
-      errorLoading: "Error loading winners:",
+      selected: "card(s) selected:", need: "Need", processing: "Processing...",
+      joinPrompt: "Join round with", joinPrompt2: "card(s) for",
+      players: "Players", pool: "Pool",
+      firstPlace: "1st Place (60%)", secondPlace: "2nd Place (10%)",
+      thirdPlace: "3rd Place (5%)", noWinner: "No Winner",
+      noRounds: "No finished rounds yet.", errorLoading: "Error loading winners:",
       noCards2: "No cards selected",
-      
-      // History & Transactions
-      depositTxt: "Deposit",
-      withdrawTxt: "Withdraw",
-      card: "Card",
-      roundTxt: "round",
-      
-      // Rules
+      depositTxt: "Deposit", withdrawTxt: "Withdraw",
+      card: "Card", roundTxt: "round",
       rule1: "Each card costs 100 Birr.",
       rule2: "You can select and buy multiple cards in a single round.",
       rule3: "Winners are drawn randomly from the purchased cards only.",
-      rule4: "Prize Pool Distribution: 60% for 1st Place, 10% for 2nd Place, 5% for 3rd Place.",
+      rule4: "Prize Pool: 60% 1st, 10% 2nd, 5% 3rd.",
       rule5: "Deposits require a valid SMS transaction reference and are approved by an admin.",
-      rule6: "Withdrawals are processed by the admin to the account details you provide."
+      rule6: "Withdrawals are processed by the admin to the account details you provide.",
+      first: "1st", second: "2nd", third: "3rd",
+      lastDraw: "MULTI HOT — Last Draw",
+      tapToReplay: "Tap to replay the draw animation",
+      drawComplete: "Draw Complete",
+      close: "Close"
     },
     am: {
-      title: "Number gaming",
-      fullName: "ሙሉ ስም",
+      title: "Number gaming", fullName: "ሙሉ ስም",
       phone: "የስልክ ቁጥር (09... ወይም +251...)",
-      loginBtn: "ይግቡ / ይመዝገቡ",
-      welcome: "እንኳን ደህና መጡ፣",
-      balance: "ቀሪ ሂሳብ",
-      birr: "ብር",
-      deposit: "ገቢ ማድረግ",
-      withdraw: "ገንዘብ ማውጣት",
-      selectCards: "ካርዶችን ይምረጡ (እያንዳንዱ 100 ብር)",
-      noCards: "ምንም ካርድ አልመረጡም",
-      payAndPlay: "ይክፈሉ እና ይጫወቱ",
-      winnersResults: "አሸናፊዎች እና ውጤቶች",
-      loading: "ውጤቶች በመጫን ላይ...",
-      myActivity: "የእኔ እንቅስቃሴ (የመጨረሻዎቹ 10)",
+      loginBtn: "ይግቡ / ይመዝገቡ", welcome: "እንኳን ደህና መጡ፣",
+      balance: "ቀሪ ሂሳብ", birr: "ብር",
+      deposit: "ገቢ ማድረግ", withdraw: "ገንዘብ ማውጣት",
+      selectCards: "ካርዶችን ይምረጡ (እያንዳንዱ 100 ብር)", noCards: "ምንም ካርድ አልመረጡም",
+      payAndPlay: "ይክፈሉ እና ይጫወቱ", winnersResults: "አሸናፊዎች እና ውጤቶች",
+      loading: "ውጤቶች በመጫን ላይ...", myActivity: "የእኔ እንቅስቃሴ (የመጨረሻዎቹ 10)",
       noActivity: "ከቅርብ ጊዜ ጀምሮ እንቅስቃሴ የለም።",
-      depositTitle: "💰 ገቢ ማድረግ",
-      amount: "መጠን (ብር)",
-      proof: "የግብይት መለያ / የSMS ማጣቀሻ",
-      submitDeposit: "ገቢ አስገባ",
-      withdrawTitle: "💸 ገንዘብ ማውጣት",
-      account: "የሂሳብ ቁጥር / የስልክ ቁጥር",
-      submitWithdraw: "ማውጣት አስገባ",
-      rulesTitle: "የጨዋታ ደንቦች",
-      navPlay: "ተጫወት",
-      navWinners: "አሸናፊዎች",
-      navActivity: "እንቅስቃሴ",
-      navWallet: "ቦርሳ",
-      navRules: "ደንቦች",
-      
-      // Dynamic Strings
-      round: "ዙር",
-      cardsSold: "ካርዶች ተሽጠዋል",
+      depositTitle: "💰 ገቢ ማድረግ", amount: "መጠን (ብር)",
+      proof: "የግብይት መለያ / የSMS ማጣቀሻ", submitDeposit: "ገቢ አስገባ",
+      withdrawTitle: "💸 ገንዘብ ማውጣት", account: "የሂሳብ ቁጥር / የስልክ ቁጥር",
+      submitWithdraw: "ማውጣት አስገባ", rulesTitle: "የጨዋታ ደንቦች",
+      navPlay: "ተጫወት", navWinners: "አሸናፊዎች", navActivity: "እንቅስቃሴ",
+      navWallet: "ቦርሳ", navRules: "ደንቦች",
+      round: "ዙር", cardsSold: "ካርዶች ተሽጠዋል",
       noActiveRound: "ንቁ ዙር የለም። ለመጀመር ካርድ ይግዙ!",
-      selected: "ካርድ(ዎች) ተመርጠዋል:",
-      need: "ያስፈልጋል",
-      processing: "በሂደት ላይ...",
-      joinPrompt: "ዙሩን ይቀላቀሉ ከ",
-      joinPrompt2: "ካርድ(ዎች) ጋር በ",
-      players: "ተጫዋቾች",
-      pool: "ጠቅላላ ሽልማት",
-      firstPlace: "1ኛ ደረጃ (60%)",
-      secondPlace: "2ኛ ደረጃ (10%)",
-      thirdPlace: "3ኛ ደረጃ (5%)",
-      noWinner: "አሸናፊ የለም",
+      selected: "ካርድ(ዎች) ተመርጠዋል:", need: "ያስፈልጋል", processing: "በሂደት ላይ...",
+      joinPrompt: "ዙሩን ይቀላቀሉ ከ", joinPrompt2: "ካርድ(ዎች) ጋር በ",
+      players: "ተጫዋቾች", pool: "ጠቅላላ ሽልማት",
+      firstPlace: "1ኛ ደረጃ (60%)", secondPlace: "2ኛ ደረጃ (10%)",
+      thirdPlace: "3ኛ ደረጃ (5%)", noWinner: "አሸናፊ የለም",
       noRounds: "እስካሁን የተጠናቀቀ ዙር የለም።",
       errorLoading: "አሸናፊዎችን በመጫን ላይ ስህተት ተከስቷል:",
       noCards2: "ምንም ካርድ አልመረጡም",
-      
-      // History & Transactions
-      depositTxt: "ገቢ",
-      withdrawTxt: "ወጪ",
-      card: "ካርድ",
-      roundTxt: "ዙር",
-      
-      // Rules
+      depositTxt: "ገቢ", withdrawTxt: "ወጪ", card: "ካርድ", roundTxt: "ዙር",
       rule1: "እያንዳንዱ ካርድ 100 ብር ያስከፍላል።",
       rule2: "በአንድ ዙር ውስጥ ብዙ ካርዶችን መምረጥ እና መግዛት ይችላሉ።",
       rule3: "አሸናፊዎች የሚመረጡት ከተገዙት ካርዶች መካከል በዘፈቀደ ነው።",
-      rule4: "የሽልማት ክፍፍል፡ 60% ለ1ኛ ደረጃ፣ 10% ለ2ኛ ደረጃ፣ 5% ለ3ኛ ደረጃ።",
-      rule5: "ገቢ ለማድረግ ትክክለኛ የSMS የግብይት ማጣቀሻ ያስፈልጋል እና በአስተዳዳሪ ይፈቀዳል።",
-      rule6: "ገንዘብ ማውጣት በአስተዳዳሪ በኩል በሰጡት የሂሳብ ዝርዝር መሰረት ይከናወናል።"
+      rule4: "የሽልማት ክፍፍል፡ 60% ለ1ኛ፣ 10% ለ2ኛ፣ 5% ለ3ኛ።",
+      rule5: "ገቢ ለማድረግ ትክክለኛ የSMS ማጣቀሻ ያስፈልጋል እና በአስተዳዳሪ ይፈቀዳል።",
+      rule6: "ገንዘብ ማውጣት በአስተዳዳሪ በኩል ይከናወናል።",
+      first: "1ኛ", second: "2ኛ", third: "3ኛ",
+      lastDraw: "MULTI HOT — የመጨረሻ ዕፃ",
+      tapToReplay: "እንደገና ለማየት ይንኩ",
+      drawComplete: "ዕፃ ተጠናቅቋል",
+      close: "ዝጋ"
     }
   };
 
-  // --- LANGUAGE FUNCTIONS ---
   function toggleLanguage() {
     currentLang = currentLang === 'en' ? 'am' : 'en';
     localStorage.setItem('dotBingoLang', currentLang);
@@ -371,47 +404,23 @@
 
   function applyTranslations() {
     const t = translations[currentLang];
-    
-    // Toggle button text
     const btnText = currentLang === 'en' ? 'አማርኛ' : 'English';
-    if($('langToggleBtn')) $('langToggleBtn').textContent = btnText;
-    if($('langToggleBtn2')) $('langToggleBtn2').textContent = btnText;
-
-    // Translate standard text elements
+    if ($('langToggleBtn')) $('langToggleBtn').textContent = btnText;
+    if ($('langToggleBtn2')) $('langToggleBtn2').textContent = btnText;
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const key = el.getAttribute('data-i18n');
       if (t[key]) el.textContent = t[key];
     });
-
-    // Translate placeholders
     document.querySelectorAll('[data-i18n-ph]').forEach(el => {
       const key = el.getAttribute('data-i18n-ph');
       if (t[key]) el.placeholder = t[key];
     });
-
-    // Translate Rules List
     const rulesList = $('rulesList');
-    if (rulesList) {
-      rulesList.innerHTML = `
-        <li>${t.rule1}</li>
-        <li>${t.rule2}</li>
-        <li>${t.rule3}</li>
-        <li>${t.rule4}</li>
-        <li>${t.rule5}</li>
-        <li>${t.rule6}</li>
-      `;
-    }
-
-    // Refresh dynamic text
+    if (rulesList) rulesList.innerHTML = `<li>${t.rule1}</li><li>${t.rule2}</li><li>${t.rule3}</li><li>${t.rule4}</li><li>${t.rule5}</li><li>${t.rule6}</li>`;
     updatePlayButton();
-    if (currentUser) {
-      refresh();
-      loadHistory();
-      loadWinners();
-    }
+    if (currentUser) { refresh(); loadHistory(); loadWinners(); }
   }
 
-  // --- API HELPER ---
   async function api(path, options = {}) {
     const res = await fetch(API + path, {
       ...options,
@@ -425,8 +434,10 @@
   function switchView(viewName) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    $(`view-${viewName}`).classList.add('active');
-    $(`nav-${viewName}`).classList.add('active');
+    const v = $(`view-${viewName}`);
+    if (v) v.classList.add('active');
+    const n = $(`nav-${viewName}`);
+    if (n) n.classList.add('active');
     if (viewName === 'winners') loadWinners();
     if (viewName === 'activity') loadHistory();
   }
@@ -439,7 +450,7 @@
     setTimeout(() => sec.classList.remove('highlight'), 2000);
   }
 
-  // --- GAME LOGIC ---
+  // ===== NUMBER GAME =====
   const grid = $('numberGrid');
   for (let i = 1; i <= 100; i++) {
     const cell = document.createElement('div');
@@ -451,11 +462,7 @@
   }
 
   function selectNumber(n) {
-    if (takenNumbers.has(n)) {
-      const t = translations[currentLang];
-      return alert(t.noCards); // Using a generic alert, could be specific
-    }
-
+    if (takenNumbers.has(n)) return;
     if (selectedNums.has(n)) {
       selectedNums.delete(n);
       document.querySelector(`.num[data-num="${n}"]`).classList.remove('selected');
@@ -463,7 +470,6 @@
       selectedNums.add(n);
       document.querySelector(`.num[data-num="${n}"]`).classList.add('selected');
     }
-
     updatePlayButton();
   }
 
@@ -471,59 +477,46 @@
     const t = translations[currentLang];
     const count = selectedNums.size;
     const totalCost = count * CARD_PRICE;
-    const btn = $('playBtn');
-    const info = $('selectedInfo');
-
+    const btn = $('playBtn'), info = $('selectedInfo');
+    if (!btn || !info) return;
     if (count === 0) {
       info.textContent = t.noCards2;
       btn.textContent = t.payAndPlay;
       btn.disabled = true;
       return;
     }
-
     info.textContent = `${count} ${t.selected} ${Array.from(selectedNums).join(', ')}`;
     btn.textContent = `${t.payAndPlay} (${totalCost} ${t.birr})`;
-
     if (!currentUser || Number(currentUser.balance) < totalCost) {
       btn.disabled = true;
       btn.textContent = `${t.need} ${totalCost} ${t.birr}`;
-    } else {
-      btn.disabled = false;
-    }
+    } else btn.disabled = false;
   }
 
   function renderRound(round, taken) {
     const t = translations[currentLang];
     takenNumbers = new Set((taken || []).map(Number));
-    
     let changed = false;
-    selectedNums.forEach(n => {
-      if (takenNumbers.has(n)) {
-        selectedNums.delete(n);
-        changed = true;
-      }
-    });
+    selectedNums.forEach(n => { if (takenNumbers.has(n)) { selectedNums.delete(n); changed = true; } });
     if (changed) updatePlayButton();
-
     document.querySelectorAll('.num').forEach(el => {
       const n = Number(el.dataset.num);
       el.classList.toggle('taken', takenNumbers.has(n));
       if (takenNumbers.has(n)) el.classList.remove('selected');
     });
-    
-    $('roundInfo').textContent = round 
-      ? `${t.round} #${round.id} — ${takenNumbers.size}/100 ${t.cardsSold}` 
-      : t.noActiveRound;
+    const info = $('roundInfo');
+    if (info) {
+      info.textContent = round
+        ? `${t.round} #${round.id} — ${takenNumbers.size}/100 ${t.cardsSold}`
+        : t.noActiveRound;
+    }
   }
 
-  // --- AUTHENTICATION ---
+  // ===== AUTH =====
   async function login() {
     const name = $('name').value.trim();
     const phone = $('phone').value.trim();
-    const t = translations[currentLang];
-    
-    if (!name || !phone) return alert('Fill in all fields.'); // Keep English for error fallback
-    
+    if (!name || !phone) return alert('Fill in all fields.');
     try {
       currentUser = await api('/api/player/login', { method: 'POST', body: JSON.stringify({ name, phone }) });
     } catch (e) { return alert(e.message); }
@@ -532,7 +525,9 @@
     $('appScreen').classList.remove('hidden');
     $('userName').textContent = currentUser.name;
 
-    await refresh(); await loadWinners(); await loadHistory();
+    await refresh();
+    await loadWinners();
+    await loadHistory();
     clearInterval(pollTimer);
     pollTimer = setInterval(() => { refresh(); }, 5000);
   }
@@ -540,15 +535,34 @@
   async function refresh() {
     if (!currentUser) return;
     try {
-      const [me, round] = await Promise.all([api(`/api/player/data/${currentUser.id}`), api('/api/player/round')]);
+      const [me, round, latestDraw] = await Promise.all([
+        api(`/api/player/data/${currentUser.id}`),
+        api('/api/player/round'),
+        api('/api/player/latest-finished-round').catch(() => null)
+      ]);
       currentUser.balance = Number(me.balance);
       $('balance').textContent = currentUser.balance.toFixed(2);
       renderRound(round.round, round.taken);
       updatePlayButton();
+
+      // ---- MULTI HOT draw detection ----
+      if (latestDraw) {
+        updateLastDrawWidget(latestDraw);
+        lastKnownDraw = latestDraw;
+        if (!baselineInitialized) {
+          lastSeenDrawId = latestDraw.id;
+          baselineInitialized = true;
+        } else if (latestDraw.id !== lastSeenDrawId) {
+          lastSeenDrawId = latestDraw.id;
+          if (latestDraw.draw_1 != null && $('slotModal').classList.contains('hidden')) {
+            showSlotAnimation(latestDraw);
+          }
+        }
+      }
     } catch (e) { console.error(e); }
   }
 
-  // --- TRANSACTIONS ---
+  // ===== WALLET =====
   async function handleDeposit() {
     const amount = Number($('depAmount').value);
     const method = $('depMethod').value;
@@ -577,72 +591,55 @@
     } catch (e) { alert(e.message); }
   }
 
-  // --- PLAY GAME ---
   async function play() {
     const t = translations[currentLang];
     if (selectedNums.size === 0) return;
-    
     const count = selectedNums.size;
     const totalCost = count * CARD_PRICE;
-    
     if (Number(currentUser.balance) < totalCost) return alert(`${t.need} ${totalCost} ${t.birr}`);
     if (!confirm(`${t.joinPrompt} ${count} ${t.joinPrompt2} ${totalCost} ${t.birr}?\n\n${Array.from(selectedNums).join(', ')}`)) return;
-
     const btn = $('playBtn');
     btn.disabled = true;
     btn.textContent = t.processing;
-
     try {
-      const data = await api('/api/player/play', { 
-        method: 'POST', 
-        body: JSON.stringify({ 
-          user_id: currentUser.id, 
-          card_numbers: Array.from(selectedNums) 
-        }) 
+      const data = await api('/api/player/play', {
+        method: 'POST',
+        body: JSON.stringify({ user_id: currentUser.id, card_numbers: Array.from(selectedNums) })
       });
-      
       alert(data.message);
       selectedNums.clear();
       document.querySelectorAll('.num').forEach(el => el.classList.remove('selected'));
       updatePlayButton();
-      
-      await refresh(); 
+      await refresh();
       await loadHistory();
-    } catch (e) { 
-      alert(e.message); 
-      btn.disabled = false; 
+    } catch (e) {
+      alert(e.message);
+      btn.disabled = false;
       updatePlayButton();
     }
   }
 
   const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
-  // --- DATA LOADERS ---
   async function loadHistory() {
     if (!currentUser) return;
     const t = translations[currentLang];
     try {
       const data = await api(`/api/player/history/${currentUser.id}`);
       const list = $('historyList');
-      
       let combined = [
         ...data.transactions.map(tx => ({ ...tx, itemType: 'transaction' })),
         ...data.tickets.map(tk => ({ ...tk, itemType: 'ticket' }))
       ];
-      
       combined.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       combined = combined.slice(0, 10);
-
-      const items = [];
-      combined.forEach(item => {
+      const items = combined.map(item => {
         if (item.itemType === 'transaction') {
           const typeTxt = item.type === 'deposit' ? t.depositTxt : t.withdrawTxt;
-          items.push(`<li><span>${typeTxt} ${Number(item.amount).toFixed(2)} ${t.birr}</span><span class="tag ${esc(item.status)}">${esc(item.status)}</span></li>`);
-        } else {
-          items.push(`<li><span>${t.card} ${item.card_number} — ${t.roundTxt} #${item.rounds ? item.rounds.id : '?'}</span><span class="tag">${item.rounds ? esc(item.rounds.status) : ''}</span></li>`);
+          return `<li><span>${typeTxt} ${Number(item.amount).toFixed(2)} ${t.birr}</span><span class="tag ${esc(item.status)}">${esc(item.status)}</span></li>`;
         }
+        return `<li><span>${t.card} ${item.card_number} — ${t.roundTxt} #${item.rounds ? item.rounds.id : '?'}</span><span class="tag">${item.rounds ? esc(item.rounds.status) : ''}</span></li>`;
       });
-      
       list.innerHTML = items.length ? items.join('') : `<li><span style="color: var(--text-muted);">${t.noActivity}</span></li>`;
     } catch (e) { console.error(e); }
   }
@@ -650,77 +647,125 @@
   async function loadWinners() {
     const t = translations[currentLang];
     const list = $('winnersList');
+    if (!list) return;
     try {
       const data = await api('/api/player/winners');
       if (!data || !data.length) {
         return list.innerHTML = `<p style="text-align: center; color: var(--text-muted);">${t.noRounds}</p>`;
       }
-
       list.innerHTML = data.map(round => {
-        const getWinnerData = (drawNum) => {
+        const getWinner = (num) => {
           if (!round.winners) return null;
-          const w = round.winners.find(x => x.card_number === drawNum);
-          if (!w) return null;
-          return { name: w.users?.name || 'Unknown', phone: w.users?.phone || '' };
+          const w = round.winners.find(x => x.card_number === num);
+          return w ? { name: w.users?.name || 'Unknown', phone: w.users?.phone || '' } : null;
         };
-
-        const w1 = getWinnerData(round.draw_1);
-        const w2 = getWinnerData(round.draw_2);
-        const w3 = getWinnerData(round.draw_3);
-
+        const w1 = getWinner(round.draw_1), w2 = getWinner(round.draw_2), w3 = getWinner(round.draw_3);
         return `
           <div style="margin-bottom: 25px; background: #1e1e2f; border-radius: 10px; padding: 15px; border: 1px solid #3b3b58;">
             <h4 style="margin-bottom: 5px; font-size: 16px; text-align: center; color: var(--accent);">${t.round} #${round.round_id}</h4>
             <p style="text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 15px;">${round.total_players} ${t.players} • ${t.pool}: ${(round.total_players * 100).toFixed(0)} ${t.birr}</p>
-            
             <div class="podium-item podium-1">
-              <div class="podium-left">
-                <span class="podium-place">🥇 ${t.firstPlace}</span>
-                <span class="podium-num">${t.card} ${round.draw_1 || '-'}</span>
-              </div>
-              <div class="podium-right">
-                ${w1 
-                  ? `<div class="podium-winner">${round.prizes.p1.toFixed(2)} ${t.birr}</div>
-                     <div class="podium-phone">${esc(w1.name)}<br>${esc(w1.phone)}</div>` 
-                  : `<span class="no-winner">${t.noWinner}</span>`}
-              </div>
+              <div class="podium-left"><span class="podium-place">🥇 ${t.firstPlace}</span><span class="podium-num">${t.card} ${round.draw_1 || '-'}</span></div>
+              <div class="podium-right">${w1 ? `<div class="podium-winner">${round.prizes.p1.toFixed(2)} ${t.birr}</div><div class="podium-phone">${esc(w1.name)}<br>${esc(w1.phone)}</div>` : `<span class="no-winner">${t.noWinner}</span>`}</div>
             </div>
-
             <div class="podium-item podium-2">
-              <div class="podium-left">
-                <span class="podium-place">🥈 ${t.secondPlace}</span>
-                <span class="podium-num">${t.card} ${round.draw_2 || '-'}</span>
-              </div>
-              <div class="podium-right">
-                ${w2 
-                  ? `<div class="podium-winner">${round.prizes.p2.toFixed(2)} ${t.birr}</div>
-                     <div class="podium-phone">${esc(w2.name)}<br>${esc(w2.phone)}</div>` 
-                  : `<span class="no-winner">${t.noWinner}</span>`}
-              </div>
+              <div class="podium-left"><span class="podium-place">🥈 ${t.secondPlace}</span><span class="podium-num">${t.card} ${round.draw_2 || '-'}</span></div>
+              <div class="podium-right">${w2 ? `<div class="podium-winner">${round.prizes.p2.toFixed(2)} ${t.birr}</div><div class="podium-phone">${esc(w2.name)}<br>${esc(w2.phone)}</div>` : `<span class="no-winner">${t.noWinner}</span>`}</div>
             </div>
-
             <div class="podium-item podium-3">
-              <div class="podium-left">
-                <span class="podium-place">🥉 ${t.thirdPlace}</span>
-                <span class="podium-num">${t.card} ${round.draw_3 || '-'}</span>
-              </div>
-              <div class="podium-right">
-                ${w3 
-                  ? `<div class="podium-winner">${round.prizes.p3.toFixed(2)} ${t.birr}</div>
-                     <div class="podium-phone">${esc(w3.name)}<br>${esc(w3.phone)}</div>` 
-                  : `<span class="no-winner">${t.noWinner}</span>`}
-              </div>
+              <div class="podium-left"><span class="podium-place">🥉 ${t.thirdPlace}</span><span class="podium-num">${t.card} ${round.draw_3 || '-'}</span></div>
+              <div class="podium-right">${w3 ? `<div class="podium-winner">${round.prizes.p3.toFixed(2)} ${t.birr}</div><div class="podium-phone">${esc(w3.name)}<br>${esc(w3.phone)}</div>` : `<span class="no-winner">${t.noWinner}</span>`}</div>
             </div>
-          </div>
-        `;
+          </div>`;
       }).join('');
-    } catch (e) { 
-      console.error(e); 
-      list.innerHTML = `<p style="text-align: center; color: var(--red); padding: 10px;">${t.errorLoading} ${e.message}</p>`; 
+    } catch (e) {
+      console.error(e);
+      list.innerHTML = `<p style="text-align: center; color: var(--red); padding: 10px;">${t.errorLoading} ${e.message}</p>`;
     }
   }
 
-  // Initialize translations on load
+  // =========================================================
+  // ============= MULTI HOT — DRAW ANIMATION ================
+  // =========================================================
+  function updateLastDrawWidget(round) {
+    const w = $('lastDrawWidget');
+    if (!w) return;
+    if (!round || round.draw_1 == null) { w.style.display = 'none'; return; }
+    w.style.display = 'block';
+    $('ldw1').textContent = round.draw_1;
+    $('ldw2').textContent = round.draw_2;
+    $('ldw3').textContent = round.draw_3;
+    $('ldwRound').textContent = `Round #${round.id}`;
+  }
+
+  function replayLastDraw() {
+    if (lastKnownDraw && lastKnownDraw.draw_1 != null) {
+      showSlotAnimation(lastKnownDraw);
+    }
+  }
+
+  function closeSlotModal() {
+    $('slotModal').classList.add('hidden');
+    // Restore '?' to reels so next open is clean
+    ['mslot1','mslot2','mslot3'].forEach(id => {
+      const w = $(id);
+      w.classList.remove('spinning', 'winner');
+      w.querySelector('.slot-number').textContent = '?';
+    });
+    $('mslotResult').innerHTML = '';
+    $('slotCloseBtn').classList.add('hidden');
+  }
+
+  async function showSlotAnimation(round) {
+    if (!round || round.draw_1 == null) return;
+    const t = translations[currentLang];
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const finals = [round.draw_1, round.draw_2, round.draw_3];
+
+    // Reset modal
+    ['mslot1','mslot2','mslot3'].forEach(id => {
+      const w = $(id);
+      w.classList.remove('spinning', 'winner');
+      w.querySelector('.slot-number').textContent = '?';
+    });
+    $('mslotResult').innerHTML = '';
+    $('slotCloseBtn').classList.add('hidden');
+    $('slotModalSub').textContent = 'Drawing winners...';
+    $('slotModal').classList.remove('hidden');
+
+    // Start cosmetic spin
+    const intervals = [];
+    if (!prefersReducedMotion) {
+      [0,1,2].forEach(i => {
+        const win = $(`mslot${i+1}`);
+        win.classList.add('spinning');
+        const numEl = win.querySelector('.slot-number');
+        intervals.push(setInterval(() => {
+          numEl.textContent = Math.floor(Math.random() * 100) + 1;
+        }, 60));
+      });
+    }
+
+    // Stop reels one by one and reveal final numbers
+    for (let i = 0; i < 3; i++) {
+      await new Promise(r => setTimeout(r, prefersReducedMotion ? 150 : 700));
+      if (intervals[i]) clearInterval(intervals[i]);
+      const win = $(`mslot${i+1}`);
+      win.classList.remove('spinning');
+      win.classList.add('winner');
+      win.querySelector('.slot-number').textContent = finals[i];
+    }
+
+    // Final result
+    $('slotModalSub').textContent = `${t.drawComplete} — Round #${round.id}`;
+    $('mslotResult').innerHTML = `
+      <div class="slot-result-round">Round #${esc(round.id)}</div>
+      <div class="slot-result-nums">${finals.join(' · ')}</div>
+    `;
+    $('slotCloseBtn').classList.remove('hidden');
+  }
+
+  // ===== BOOT =====
   applyTranslations();
 </script>
 </body>
