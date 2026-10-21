@@ -7,20 +7,16 @@
 <style>
   :root { --bg:#161622; --panel:#242438; --accent:#FF9800; --green:#4CAF50; --red:#e53935; --blue:#2196F3; --text:#fff; --text-muted:#888; }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  
-  /* Added bottom padding to prevent bottom nav from covering content */
   body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 15px; padding-bottom: 80px; }
-  
+
   h1 { text-align:center; font-size: 22px; margin-bottom: 20px; }
   .panel { background: var(--panel); padding:15px; border-radius:10px; margin:0 auto 15px; max-width: 900px; }
   h2 { margin-bottom: 15px; font-size:18px; color: var(--accent); }
-  
-  /* View Switching */
+
   .view { display: none; animation: fadeIn 0.3s ease; }
   .view.active { display: block; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-  /* Inputs & Buttons */
   input, button { padding: 12px; border-radius:6px; border:none; font-size:16px; }
   input { background:#1b1b2b; color:#fff; width:100%; margin-bottom: 10px; border: 1px solid #3b3b58; }
   button { background: var(--green); color:#fff; cursor:pointer; font-weight:bold; transition: 0.2s; }
@@ -32,33 +28,57 @@
 
   .row { display:flex; flex-direction: column; gap:10px; margin-top: 15px; }
   .row-btn { display: flex; gap: 10px; flex-direction: column; margin-top: 15px; }
-  
-  /* Mobile-friendly scrollable tables */
+
   .table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; }
   table { width:100%; border-collapse:collapse; font-size:14px; min-width: 500px; }
   th, td { padding:12px 8px; text-align:left; border-bottom:1px solid #343450; }
   th { color:#9aa; font-weight:600; white-space: nowrap; }
   .empty { color:#888; font-style:italic; text-align: center; padding: 20px; }
-  
+
   .btn-sm { padding:8px 12px; font-size:13px; width: 100%; margin-bottom: 5px; }
   .hidden { display:none !important; }
-  .badge { background:#3b3b58; padding:2px 6px; border-radius:4px; font-size:12px; text-transform:uppercase; }
   .proof-text { font-family: monospace; background: #1b1b2b; padding: 6px; border-radius: 4px; font-size: 12px; border: 1px solid #3b3b58; display: inline-block; margin-top: 4px; word-break: break-all;}
-  
+
   .place-1 { color: #FFD700; font-weight: bold; white-space: nowrap; }
   .place-2 { color: #C0C0C0; font-weight: bold; white-space: nowrap; }
   .place-3 { color: #CD7F32; font-weight: bold; white-space: nowrap; }
-  
   .user-info-cell { font-size: 13px; }
   .user-info-cell small { color: #aaa; display: block; margin-top: 4px; }
 
-  /* Bottom Navigation Bar */
   .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--panel); display: flex; justify-content: space-around; padding: 8px 5px 15px; border-top: 1px solid #2a2a40; z-index: 100; box-shadow: 0 -2px 10px rgba(0,0,0,0.3); }
   .nav-item { background: transparent; border: none; color: var(--text-muted); font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 12px; border-radius: 12px; margin: 0; width: auto; cursor: pointer; transition: 0.3s; font-weight: 600; }
   .nav-item svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .nav-item.active { background: var(--accent); color: #000; box-shadow: 0 4px 10px rgba(255, 152, 0, 0.3); }
 
-  /* Desktop Adjustments */
+  /* ===== Slot modal ===== */
+  .slot-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.94); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 15px; animation: fadeIn 0.25s; }
+  .slot-modal-inner { width: 100%; max-width: 460px; }
+  .slot-machine { background: linear-gradient(180deg, #2a0a1a 0%, #12121f 100%); border-radius: 16px; padding: 20px 16px; border: 2px solid #ff9800; box-shadow: 0 0 40px rgba(255, 152, 0, 0.35); }
+  .slot-header { text-align: center; margin-bottom: 16px; }
+  .slot-title { font-size: 24px; font-weight: 900; letter-spacing: 3px; background: linear-gradient(90deg, #ff9800, #ffeb3b, #ff9800); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .slot-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .slot-windows { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  .slot-window { background: #050510; border: 3px solid #ff9800; border-radius: 12px; padding: 8px 4px; text-align: center; overflow: hidden; box-shadow: inset 0 0 20px rgba(255, 152, 0, 0.2); transition: border-color 0.3s, box-shadow 0.3s; }
+  .slot-window-label { font-size: 10px; color: #ff9800; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .slot-number { font-size: 34px; font-weight: 900; color: #fff; height: 48px; line-height: 48px; font-family: 'Courier New', monospace; text-shadow: 0 0 10px rgba(255, 235, 59, 0.7); }
+  .slot-window.spinning .slot-number { color: #ffeb3b; animation: slotBlur 0.08s linear infinite; }
+  @keyframes slotBlur {
+    0%   { transform: translateY(-6px); opacity: 0.7; }
+    50%  { transform: translateY(6px);  opacity: 1; }
+    100% { transform: translateY(-6px); opacity: 0.7; }
+  }
+  .slot-window.winner { border-color: #4CAF50; box-shadow: 0 0 25px rgba(76, 175, 80, 0.8), inset 0 0 20px rgba(76, 175, 80, 0.3); }
+  .slot-window.winner .slot-number { color: #4CAF50; text-shadow: 0 0 14px rgba(76, 175, 80, 0.9); }
+  .slot-result { text-align: center; min-height: 44px; }
+  .slot-result-round { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+  .slot-result-nums { font-size: 20px; font-weight: 900; color: #ffeb3b; letter-spacing: 4px; text-shadow: 0 0 12px rgba(255, 235, 59, 0.6); }
+  .slot-close-btn { width: 100%; margin-top: 14px; padding: 14px; border-radius: 8px; background: var(--accent); color: #000; font-weight: bold; font-size: 15px; border: none; cursor: pointer; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .slot-window.spinning .slot-number { animation: none; }
+    .view { animation: none; }
+  }
+  @media (max-width: 360px) { .slot-number { font-size: 26px; height: 42px; line-height: 42px; } }
   @media (min-width: 600px) {
     .row { flex-direction: row; align-items: center; }
     .row > input { flex: 1; margin-bottom: 0; }
@@ -84,16 +104,14 @@
 
 <!-- MAIN APP -->
 <div id="adminPanel" class="hidden">
-  
+
   <!-- TAB 1: PENDING TRANSACTIONS -->
   <div id="view-transactions" class="view active">
     <div class="panel">
       <h2>Pending Transactions</h2>
       <div class="table-wrap">
         <table>
-          <thead>
-            <tr><th>Player</th><th>Type / Amount</th><th>Details & Proof</th><th>Action</th></tr>
-          </thead>
+          <thead><tr><th>Player</th><th>Type / Amount</th><th>Details & Proof</th><th>Action</th></tr></thead>
           <tbody id="txBody"><tr><td colspan="4" class="empty">Loading…</td></tr></tbody>
         </table>
       </div>
@@ -112,9 +130,12 @@
       </div>
 
       <div class="row-btn" style="margin-top: 20px;">
-        <button onclick="draw()" class="accent">Draw Winners & Close Round</button>
+        <button onclick="draw()" class="accent">🎰 Spin Multi Hot — Draw Winners & Close Round</button>
         <button onclick="newRound()" class="blue">Start New Round</button>
       </div>
+      <p style="margin-top: 12px; text-align: center; color: var(--text-muted); font-size: 11px;">
+        The slot machine animates and reveals the 3 winning card numbers. All players see the same draw live.
+      </p>
     </div>
   </div>
 
@@ -124,16 +145,14 @@
       <h2>Past Winners & History</h2>
       <div class="table-wrap">
         <table>
-          <thead>
-            <tr><th>Round</th><th>Place</th><th>Winner</th><th>Phone</th><th>Prize Amount</th></tr>
-          </thead>
+          <thead><tr><th>Round</th><th>Place</th><th>Winner</th><th>Phone</th><th>Prize Amount</th></tr></thead>
           <tbody id="winnersBody"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
         </table>
       </div>
     </div>
   </div>
 
-  <!-- BOTTOM NAVIGATION BAR -->
+  <!-- BOTTOM NAV -->
   <div class="bottom-nav">
     <button class="nav-item active" id="nav-transactions" onclick="switchView('transactions')">
       <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
@@ -151,8 +170,36 @@
 
 </div>
 
+<!-- SLOT ANIMATION MODAL -->
+<div id="slotModal" class="slot-modal hidden">
+  <div class="slot-modal-inner">
+    <div class="slot-machine">
+      <div class="slot-header">
+        <div class="slot-title">MULTI HOT</div>
+        <div class="slot-subtitle" id="slotModalSub">Drawing winners...</div>
+      </div>
+      <div class="slot-windows">
+        <div class="slot-window" id="mslot1">
+          <div class="slot-window-label">1st</div>
+          <div class="slot-number">?</div>
+        </div>
+        <div class="slot-window" id="mslot2">
+          <div class="slot-window-label">2nd</div>
+          <div class="slot-number">?</div>
+        </div>
+        <div class="slot-window" id="mslot3">
+          <div class="slot-window-label">3rd</div>
+          <div class="slot-number">?</div>
+        </div>
+      </div>
+      <div class="slot-result" id="mslotResult"></div>
+      <button id="slotCloseBtn" class="slot-close-btn hidden" onclick="closeSlotModal()">Continue</button>
+    </div>
+  </div>
+</div>
+
 <script>
-  const LIVE_BACKEND_URL = 'https://phone45.vercel.app/'; // ⚠️ UPDATE THIS
+  const LIVE_BACKEND_URL = 'https://phone45.vercel.app/';
   const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:3000' : LIVE_BACKEND_URL;
 
   let adminKey = localStorage.getItem('dotBingoAdminKey') || '';
@@ -170,15 +217,11 @@
     return data;
   }
 
-  // --- UI NAVIGATION LOGIC ---
   function switchView(viewName) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    
     $(`view-${viewName}`).classList.add('active');
     $(`nav-${viewName}`).classList.add('active');
-
-    // Optional: refresh specific data on tab click
     if (viewName === 'transactions') loadTransactions();
     if (viewName === 'players') loadPlayers();
     if (viewName === 'winners') loadWinners();
@@ -196,7 +239,7 @@
     $('adminPanel').classList.remove('hidden');
     refreshAll();
     clearInterval(timer);
-    timer = setInterval(refreshAll, 5000); // Auto-refresh every 5 seconds
+    timer = setInterval(refreshAll, 5000);
   }
 
   async function refreshAll() {
@@ -208,7 +251,6 @@
       const rows = await api('/api/admin/transactions');
       const body = $('txBody');
       if (!rows.length) return body.innerHTML = '<tr><td colspan="4" class="empty">No pending transactions.</td></tr>';
-      
       body.innerHTML = rows.map(t => {
         let details = '';
         if (t.type === 'deposit') {
@@ -216,12 +258,8 @@
         } else {
           details = `<b>Method:</b> ${esc(t.method)}<br><span class="proof-text">${esc(t.account_details)}</span>`;
         }
-
         return `<tr>
-          <td class="user-info-cell">
-            <b>${esc(t.users?.name)}</b>
-            <small>${esc(t.users?.phone)}</small>
-          </td>
+          <td class="user-info-cell"><b>${esc(t.users?.name)}</b><small>${esc(t.users?.phone)}</small></td>
           <td><b style="color:var(--accent)">${esc(t.type).toUpperCase()}</b><br>${Number(t.amount).toFixed(2)} Birr</td>
           <td>${details}</td>
           <td>
@@ -260,25 +298,17 @@
     try {
       const rounds = await api('/api/admin/winners');
       const body = $('winnersBody');
-      
       if (!rounds || !rounds.length) {
         return body.innerHTML = '<tr><td colspan="5" class="empty">No rounds finished yet.</td></tr>';
       }
-
       let html = '';
-      
       rounds.forEach(round => {
         const getWinner = (num) => {
           if (!round.winners) return null;
           const w = round.winners.find(x => x.card_number === num);
-          if (!w) return null;
-          return { name: w.users?.name || 'Unknown', phone: w.users?.phone || '' };
+          return w ? { name: w.users?.name || 'Unknown', phone: w.users?.phone || '' } : null;
         };
-
-        const w1 = getWinner(round.draw_1);
-        const w2 = getWinner(round.draw_2);
-        const w3 = getWinner(round.draw_3);
-
+        const w1 = getWinner(round.draw_1), w2 = getWinner(round.draw_2), w3 = getWinner(round.draw_3);
         html += `<tr>
           <td rowspan="3" style="vertical-align:top; font-weight:bold; border-bottom: 2px solid #555;">
             #${round.round_id}<br>
@@ -288,36 +318,95 @@
           <td>${w1 ? esc(w1.name) : '<span class="empty">No Winner</span>'}</td>
           <td>${w1 ? esc(w1.phone) : '-'}</td>
           <td style="color: var(--green); font-weight: bold;">${w1 ? round.prizes.p1.toFixed(2) + ' Birr' : '-'}</td>
-        </tr>`;
-
-        html += `<tr>
+        </tr>
+        <tr>
           <td class="place-2">🥈 2nd (${round.draw_2 || '-'})</td>
           <td>${w2 ? esc(w2.name) : '<span class="empty">No Winner</span>'}</td>
           <td>${w2 ? esc(w2.phone) : '-'}</td>
           <td style="color: var(--green); font-weight: bold;">${w2 ? round.prizes.p2.toFixed(2) + ' Birr' : '-'}</td>
-        </tr>`;
-
-        html += `<tr>
+        </tr>
+        <tr>
           <td class="place-3" style="border-bottom: 2px solid #555;">🥉 3rd (${round.draw_3 || '-'})</td>
           <td style="border-bottom: 2px solid #555;">${w3 ? esc(w3.name) : '<span class="empty">No Winner</span>'}</td>
           <td style="border-bottom: 2px solid #555;">${w3 ? esc(w3.phone) : '-'}</td>
           <td style="border-bottom: 2px solid #555; color: var(--green); font-weight: bold;">${w3 ? round.prizes.p3.toFixed(2) + ' Birr' : '-'}</td>
         </tr>`;
       });
-      
       body.innerHTML = html;
     } catch (e) {
       $('winnersBody').innerHTML = `<tr><td colspan="5" class="empty">${esc(e.message)}</td></tr>`;
     }
   }
 
+  // =========================================================
+  // ============= MULTI HOT — DRAW ANIMATION ================
+  // =========================================================
+  function closeSlotModal() {
+    $('slotModal').classList.add('hidden');
+    ['mslot1','mslot2','mslot3'].forEach(id => {
+      const w = $(id);
+      w.classList.remove('spinning', 'winner');
+      w.querySelector('.slot-number').textContent = '?';
+    });
+    $('mslotResult').innerHTML = '';
+    $('slotCloseBtn').classList.add('hidden');
+  }
+
+  async function showSlotAnimation(round) {
+    if (!round || round.draw_1 == null) return;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const finals = [round.draw_1, round.draw_2, round.draw_3];
+
+    ['mslot1','mslot2','mslot3'].forEach(id => {
+      const w = $(id);
+      w.classList.remove('spinning', 'winner');
+      w.querySelector('.slot-number').textContent = '?';
+    });
+    $('mslotResult').innerHTML = '';
+    $('slotCloseBtn').classList.add('hidden');
+    $('slotModalSub').textContent = 'Drawing winners...';
+    $('slotModal').classList.remove('hidden');
+
+    const intervals = [];
+    if (!prefersReducedMotion) {
+      [0,1,2].forEach(i => {
+        const win = $(`mslot${i+1}`);
+        win.classList.add('spinning');
+        const numEl = win.querySelector('.slot-number');
+        intervals.push(setInterval(() => {
+          numEl.textContent = Math.floor(Math.random() * 100) + 1;
+        }, 60));
+      });
+    }
+
+    for (let i = 0; i < 3; i++) {
+      await new Promise(r => setTimeout(r, prefersReducedMotion ? 150 : 700));
+      if (intervals[i]) clearInterval(intervals[i]);
+      const win = $(`mslot${i+1}`);
+      win.classList.remove('spinning');
+      win.classList.add('winner');
+      win.querySelector('.slot-number').textContent = finals[i];
+    }
+
+    $('slotModalSub').textContent = `Draw Complete — Round #${round.id}`;
+    $('mslotResult').innerHTML = `
+      <div class="slot-result-round">Round #${esc(round.id)}</div>
+      <div class="slot-result-nums">${finals.join(' · ')}</div>
+    `;
+    $('slotCloseBtn').classList.remove('hidden');
+  }
+
   async function draw() {
-    if (!confirm('Close the current round and draw 3 winners?')) return;
+    if (!confirm('Draw winners and close the current round?')) return;
     try {
-      const data = await api('/api/admin/draw', { method: 'POST' });
-      alert(`Round Finished!\n\nDraws: ${data.draw_1 || 'None'}, ${data.draw_2 || 'None'}, ${data.draw_3 || 'None'}\n\nTotal Pool: ${data.total_pool} Birr\n\n1st Prize: ${data.prize_1} Birr\n2nd Prize: ${data.prize_2} Birr\n3rd Prize: ${data.prize_3} Birr`);
-      
-      // Auto switch to winners tab after drawing
+      await api('/api/admin/draw', { method: 'POST' });
+      // Fetch latest finished round (includes round_id for display)
+      const latest = await api('/api/player/latest-finished-round').catch(() => null);
+      if (latest && latest.draw_1 != null) {
+        await showSlotAnimation(latest);
+      } else {
+        alert('Round finished.');
+      }
       switchView('winners');
       await refreshAll();
     } catch (e) { alert(e.message); }
@@ -328,8 +417,6 @@
     try {
       const data = await api('/api/admin/new-round', { method: 'POST' });
       alert(data.message);
-      
-      // Auto switch to players tab after starting new round
       switchView('players');
       await refreshAll();
     } catch (e) { alert(e.message); }
