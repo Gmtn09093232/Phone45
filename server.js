@@ -184,7 +184,18 @@ app.get('/api/player/winners', wrap(async (req, res) => {
   const results = await fetchWinners(5);
   res.json(results);
 }));
-
+// Lightweight endpoint so player polls can detect new draws
+app.get('/api/player/latest-finished-round', wrap(async (req, res) => {
+  const { data, error } = await supabase
+    .from('rounds')
+    .select('id, draw_1, draw_2, draw_3, finished_at')
+    .eq('status', 'finished')
+    .order('finished_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  res.json(data || null);
+}));
 // ---------- ADMIN ROUTES ----------
 app.get('/api/admin/winners', adminOnly, wrap(async (req, res) => {
   const results = await fetchWinners(10);
