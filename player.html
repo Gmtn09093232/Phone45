@@ -74,7 +74,7 @@
   .rules-list { text-align: left; line-height: 1.6; font-size: 14px; color: #ccc; }
   .rules-list li { margin-bottom: 12px; list-style-type: decimal; margin-left: 20px; }
 
-  /* ===== MULTI HOT — Last Draw widget ===== */
+  /* Last Draw widget */
   .last-draw-widget { background: linear-gradient(135deg, #2a1a3f 0%, #1e1e2f 100%); border: 1px solid #ff9800; border-radius: 12px; padding: 12px 14px; margin-bottom: 15px; cursor: pointer; transition: 0.2s; }
   .last-draw-widget:active { transform: scale(0.98); }
   .ldw-label { font-size: 10px; color: #ff9800; font-weight: bold; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
@@ -84,7 +84,7 @@
   .ldw-num { flex: 1; text-align: center; font-size: 20px; font-weight: 900; color: #ffeb3b; background: #050510; border: 2px solid #ff9800; border-radius: 8px; padding: 6px 0; font-family: 'Courier New', monospace; text-shadow: 0 0 8px rgba(255,235,59,0.5); }
   .ldw-sub { font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 8px; }
 
-  /* ===== Slot modal ===== */
+  /* Slot modal */
   .slot-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 15px; animation: fadeIn 0.25s; }
   .slot-modal-inner { width: 100%; max-width: 460px; }
   .slot-machine { background: linear-gradient(180deg, #2a0a1a 0%, #12121f 100%); border-radius: 16px; padding: 20px 16px; border: 2px solid #ff9800; box-shadow: 0 0 40px rgba(255, 152, 0, 0.35); }
@@ -108,9 +108,32 @@
   .slot-result-nums { font-size: 20px; font-weight: 900; color: #ffeb3b; letter-spacing: 4px; text-shadow: 0 0 12px rgba(255, 235, 59, 0.6); }
   .slot-close-btn { width: 100%; margin-top: 14px; padding: 14px; border-radius: 8px; background: var(--accent); color: #fff; font-weight: bold; font-size: 15px; border: none; cursor: pointer; }
 
+  /* Win message */
+  .slot-win-msg {
+    text-align: center;
+    margin-top: 12px;
+    padding: 12px;
+    background: linear-gradient(135deg, #4CAF50, #2e7d32);
+    border-radius: 10px;
+    font-weight: bold;
+    color: #fff;
+    border: 2px solid #66bb6a;
+    box-shadow: 0 4px 20px rgba(76, 175, 80, 0.5);
+    animation: slideDown 0.4s ease;
+  }
+  .slot-win-msg .big { font-size: 22px; display: block; margin-top: 4px; }
+  @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+  @keyframes balanceFlash {
+    0%, 100% { color: var(--green); }
+    50%      { color: #ffeb3b; transform: scale(1.15); }
+  }
+  .balance-flash { animation: balanceFlash 0.75s ease 2; display: inline-block; }
+
   @media (prefers-reduced-motion: reduce) {
     .slot-window.spinning .slot-number { animation: none; }
-    .view { animation: none; }
+    .view, .slot-win-msg { animation: none; }
+    .balance-flash { animation: none; }
   }
   @media (max-width: 360px) {
     .slot-number { font-size: 26px; height: 42px; line-height: 42px; }
@@ -160,7 +183,6 @@
       </button>
     </div>
 
-    <!-- MULTI HOT — Last Draw widget -->
     <div class="last-draw-widget" id="lastDrawWidget" style="display:none;" onclick="replayLastDraw()">
       <div class="ldw-label">
         <span class="ldw-icon">🎰</span>
@@ -290,6 +312,7 @@
         </div>
       </div>
       <div class="slot-result" id="mslotResult"></div>
+      <div class="slot-win-msg hidden" id="slotWinMsg"></div>
       <button id="slotCloseBtn" class="slot-close-btn hidden" onclick="closeSlotModal()" data-i18n="close">Close</button>
     </div>
   </div>
@@ -314,7 +337,6 @@
 
   const $ = (id) => document.getElementById(id);
 
-  // ===== TRANSLATIONS =====
   const translations = {
     en: {
       title: ">Number gaming", fullName: "Full Name",
@@ -540,15 +562,26 @@
         api('/api/player/round'),
         api('/api/player/latest-finished-round').catch(() => null)
       ]);
+
+      // Balance flash if it went up
+      const oldBalance = Number(currentUser.balance) || 0;
       currentUser.balance = Number(me.balance);
       $('balance').textContent = currentUser.balance.toFixed(2);
+      if (currentUser.balance > oldBalance) {
+        const el = $('balance');
+        el.classList.remove('balance-flash');
+        void el.offsetWidth;
+        el.classList.add('balance-flash');
+        setTimeout(() => el.classList.remove('balance-flash'), 1600);
+      }
+
       renderRound(round.round, round.taken);
       updatePlayButton();
 
-      // ---- MULTI HOT draw detection ----
       if (latestDraw) {
         updateLastDrawWidget(latestDraw);
         lastKnownDraw = latestDraw;
+
         if (!baselineInitialized) {
           lastSeenDrawId = latestDraw.id;
           baselineInitialized = true;
@@ -706,13 +739,14 @@
 
   function closeSlotModal() {
     $('slotModal').classList.add('hidden');
-    // Restore '?' to reels so next open is clean
     ['mslot1','mslot2','mslot3'].forEach(id => {
       const w = $(id);
       w.classList.remove('spinning', 'winner');
       w.querySelector('.slot-number').textContent = '?';
     });
     $('mslotResult').innerHTML = '';
+    $('slotWinMsg').innerHTML = '';
+    $('slotWinMsg').classList.add('hidden');
     $('slotCloseBtn').classList.add('hidden');
   }
 
@@ -729,9 +763,16 @@
       w.querySelector('.slot-number').textContent = '?';
     });
     $('mslotResult').innerHTML = '';
+    $('slotWinMsg').innerHTML = '';
+    $('slotWinMsg').classList.add('hidden');
     $('slotCloseBtn').classList.add('hidden');
     $('slotModalSub').textContent = 'Drawing winners...';
     $('slotModal').classList.remove('hidden');
+
+    // Fetch win status in parallel
+    const winPromise = currentUser
+      ? api(`/api/player/win-check/${currentUser.id}/${round.id}`).catch(() => null)
+      : Promise.resolve(null);
 
     // Start cosmetic spin
     const intervals = [];
@@ -746,7 +787,7 @@
       });
     }
 
-    // Stop reels one by one and reveal final numbers
+    // Stop reels one at a time
     for (let i = 0; i < 3; i++) {
       await new Promise(r => setTimeout(r, prefersReducedMotion ? 150 : 700));
       if (intervals[i]) clearInterval(intervals[i]);
@@ -756,12 +797,23 @@
       win.querySelector('.slot-number').textContent = finals[i];
     }
 
-    // Final result
     $('slotModalSub').textContent = `${t.drawComplete} — Round #${round.id}`;
     $('mslotResult').innerHTML = `
       <div class="slot-result-round">Round #${esc(round.id)}</div>
       <div class="slot-result-nums">${finals.join(' · ')}</div>
     `;
+
+    // Show win banner if user won
+    const winInfo = await winPromise;
+    if (winInfo && winInfo.won && Number(winInfo.amount) > 0) {
+      $('slotWinMsg').innerHTML = `
+        <div>🏆 You Won!</div>
+        <span class="big">${Number(winInfo.amount).toFixed(2)} Birr</span>
+      `;
+      $('slotWinMsg').classList.remove('hidden');
+      setTimeout(() => refresh(), 100);
+    }
+
     $('slotCloseBtn').classList.remove('hidden');
   }
 
