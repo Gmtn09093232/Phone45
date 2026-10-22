@@ -15,7 +15,7 @@ const supabase = createClient(
 );
 
 const CARD_PRICE = 100;
-const PHONE_RE = /^(?:\+251|251|0)9\d{8}$/; 
+const PHONE_RE = /^(?:\+251|251|0)9\d{8}$/;
 
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
@@ -38,13 +38,12 @@ async function fetchWinners(limit) {
     .eq('status', 'finished')
     .order('finished_at', { ascending: false })
     .limit(limit);
-    
+
   if (rErr) throw rErr;
   if (!rounds || rounds.length === 0) return [];
 
   const results = [];
   for (const round of rounds) {
-    // Get total tickets sold in this round to calculate the pool
     const { data: allTickets, error: cErr } = await supabase
       .from('tickets')
       .select('*', { count: 'exact' })
@@ -53,38 +52,26 @@ async function fetchWinners(limit) {
     if (cErr) throw cErr;
     const totalTickets = allTickets.length;
     const totalPool = totalTickets * CARD_PRICE;
-    
-    // Calculate prizes (60%, 10%, 5%)
-    const prizes = {
-      p1: totalPool * 0.60,
-      p2: totalPool * 0.10,
-      p3: totalPool * 0.05
-    };
+    const prizes = { p1: totalPool * 0.60, p2: totalPool * 0.10, p3: totalPool * 0.05 };
 
-    // Get winners for the specific drawn numbers
     const winningNumbers = [round.draw_1, round.draw_2, round.draw_3].filter(n => n !== null);
     let winners = [];
-    
     if (winningNumbers.length > 0) {
       const { data: tickets, error: tErr } = await supabase
         .from('tickets')
         .select('card_number, users (name, phone)')
         .eq('round_id', round.id)
         .in('card_number', winningNumbers);
-        
       if (tErr) throw tErr;
       winners = tickets || [];
     }
 
     results.push({
       round_id: round.id,
-      draw_1: round.draw_1,
-      draw_2: round.draw_2,
-      draw_3: round.draw_3,
+      draw_1: round.draw_1, draw_2: round.draw_2, draw_3: round.draw_3,
       finished_at: round.finished_at,
       total_players: totalTickets,
-      prizes: prizes,
-      winners: winners
+      prizes, winners
     });
   }
   return results;
@@ -120,9 +107,8 @@ app.post('/api/player/deposit', wrap(async (req, res) => {
   const { user_id, amount, method, proof } = req.body;
   if (!Number.isFinite(amount) || amount <= 0) return res.status(400).json({ error: 'Invalid amount' });
   if (!proof) return res.status(400).json({ error: 'Transaction proof/reference is required' });
-
-  const { error } = await supabase.from('transactions').insert({ 
-    user_id, type: 'deposit', amount, status: 'pending', method, proof 
+  const { error } = await supabase.from('transactions').insert({
+    user_id, type: 'deposit', amount, status: 'pending', method, proof
   });
   if (error) throw error;
   res.json({ message: 'Deposit request sent. Waiting for admin approval.' });
@@ -132,7 +118,6 @@ app.post('/api/player/withdraw', wrap(async (req, res) => {
   const { user_id, amount, method, account_details } = req.body;
   if (!Number.isFinite(amount) || amount <= 0) return res.status(400).json({ error: 'Invalid amount' });
   if (!account_details) return res.status(400).json({ error: 'Account details required' });
-
   const { data, error } = await supabase.rpc('request_withdrawal', {
     p_user_id: user_id, p_amount: amount, p_method: method, p_account: account_details
   });
@@ -140,25 +125,18 @@ app.post('/api/player/withdraw', wrap(async (req, res) => {
   res.json({ message: 'Withdrawal requested.', new_balance: data.new_balance });
 }));
 
-// UPDATED: Play route accepts an array of card numbers
 app.post('/api/player/play', wrap(async (req, res) => {
   const { user_id, card_numbers } = req.body;
-  
   if (!Array.isArray(card_numbers) || card_numbers.length === 0) {
     return res.status(400).json({ error: 'Select at least one card.' });
   }
-
-  // Calls the new DB function that handles arrays
-  const { data, error } = await supabase.rpc('place_tickets', { 
-    p_user_id: user_id, 
-    p_card_numbers: card_numbers 
+  const { data, error } = await supabase.rpc('place_tickets', {
+    p_user_id: user_id, p_card_numbers: card_numbers
   });
-  
   if (error) return res.status(400).json({ error: error.message });
-  
-  res.json({ 
-    message: `Successfully joined round #${data.round_id} with ${data.count} card(s)!`, 
-    ...data 
+  res.json({
+    message: `Successfully joined round #${data.round_id} with ${data.count} card(s)!`,
+    ...data
   });
 }));
 
@@ -166,7 +144,6 @@ app.get('/api/player/round', wrap(async (req, res) => {
   const { data: round, error: rErr } = await supabase.from('rounds').select('id, status, created_at').eq('status', 'active').maybeSingle();
   if (rErr) throw rErr;
   if (!round) return res.json({ round: null, taken: [] });
-  
   const { data: tickets, error } = await supabase.from('tickets').select('card_number').eq('round_id', round.id);
   if (error) throw error;
   res.json({ round, taken: (tickets || []).map(t => t.card_number) });
@@ -184,7 +161,8 @@ app.get('/api/player/winners', wrap(async (req, res) => {
   const results = await fetchWinners(5);
   res.json(results);
 }));
-// Lightweight endpoint so player polls can detect new draws
+
+// ---- Multi Hot draw detection: latest finished round ----
 app.get('/api/player/latest-finished-round', wrap(async (req, res) => {
   const { data, error } = await supabase
     .from('rounds')
@@ -196,6 +174,49 @@ app.get('/api/player/latest-finished-round', wrap(async (req, res) => {
   if (error) throw error;
   res.json(data || null);
 }));
+
+// ---- Did THIS user win THAT round? How much? ----
+app.get('/api/player/win-check/:user_id/:round_id', wrap(async (req, res) => {
+  const userId = Number(req.params.user_id);
+  const roundId = Number(req.params.round_id);
+
+  const { data: round, error: rErr } = await supabase
+    .from('rounds')
+    .select('id, draw_1, draw_2, draw_3')
+    .eq('id', roundId)
+    .eq('status', 'finished')
+    .maybeSingle();
+  if (rErr) throw rErr;
+  if (!round) return res.json({ won: false, amount: 0 });
+
+  const drawNums = [round.draw_1, round.draw_2, round.draw_3].filter(n => n != null);
+  if (!drawNums.length) return res.json({ won: false, amount: 0 });
+
+  const { data: all } = await supabase
+    .from('tickets').select('id', { count: 'exact' }).eq('round_id', roundId);
+  const totalPool = (all?.length || 0) * CARD_PRICE;
+
+  const prizeForCard = {
+    [round.draw_1]: totalPool * 0.60,
+    [round.draw_2]: totalPool * 0.10,
+    [round.draw_3]: totalPool * 0.05
+  };
+
+  const { data: userTickets } = await supabase
+    .from('tickets')
+    .select('card_number')
+    .eq('round_id', roundId)
+    .eq('user_id', userId)
+    .in('card_number', drawNums);
+
+  let amount = 0;
+  (userTickets || []).forEach(t => {
+    amount += prizeForCard[t.card_number] || 0;
+  });
+
+  res.json({ won: amount > 0, amount });
+}));
+
 // ---------- ADMIN ROUTES ----------
 app.get('/api/admin/winners', adminOnly, wrap(async (req, res) => {
   const results = await fetchWinners(10);
@@ -219,29 +240,87 @@ app.post('/api/admin/transaction/:id', adminOnly, wrap(async (req, res) => {
 app.get('/api/admin/players', adminOnly, wrap(async (req, res) => {
   const { data: round } = await supabase.from('rounds').select('id').eq('status', 'active').maybeSingle();
   if (!round) return res.json({ round: null, players: [] });
-  
   const { data, error } = await supabase
     .from('tickets')
     .select('card_number, users (name, phone)')
     .eq('round_id', round.id)
     .order('card_number', { ascending: true });
-    
   res.json({ round, players: data });
 }));
 
+// ---- Draw winners + AUTO-CREDIT prizes (idempotent) ----
 app.post('/api/admin/draw', adminOnly, wrap(async (req, res) => {
   const { data, error } = await supabase.rpc('finish_round');
   if (error) return res.status(400).json({ error: error.message });
-  res.json(data);
+
+  let prizesAwarded = [];
+  try {
+    const { data: round } = await supabase
+      .from('rounds')
+      .select('id, draw_1, draw_2, draw_3, prizes_paid')
+      .eq('status', 'finished')
+      .order('finished_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (round && !round.prizes_paid) {
+      const drawNums = [round.draw_1, round.draw_2, round.draw_3].filter(n => n != null);
+
+      if (drawNums.length > 0) {
+        const { data: allTickets } = await supabase
+          .from('tickets')
+          .select('id', { count: 'exact' })
+          .eq('round_id', round.id);
+        const totalPool = (allTickets?.length || 0) * CARD_PRICE;
+
+        const { data: winningTickets } = await supabase
+          .from('tickets')
+          .select('card_number, user_id')
+          .eq('round_id', round.id)
+          .in('card_number', drawNums);
+
+        const prizeForCard = {
+          [round.draw_1]: totalPool * 0.60,
+          [round.draw_2]: totalPool * 0.10,
+          [round.draw_3]: totalPool * 0.05
+        };
+
+        const userPrizes = {};
+        (winningTickets || []).forEach(t => {
+          if (t.user_id == null) return;
+          const amt = prizeForCard[t.card_number] || 0;
+          if (amt > 0) {
+            userPrizes[t.user_id] = (userPrizes[t.user_id] || 0) + amt;
+          }
+        });
+
+        for (const [userId, amount] of Object.entries(userPrizes)) {
+          const { error: cErr } = await supabase.rpc('credit_prize', {
+            p_user_id: Number(userId),
+            p_amount: Number(amount)
+          });
+          if (cErr) {
+            console.error(`credit_prize failed for user ${userId}:`, cErr);
+          } else {
+            prizesAwarded.push({ user_id: Number(userId), amount: Number(amount) });
+          }
+        }
+      }
+
+      await supabase.from('rounds').update({ prizes_paid: true }).eq('id', round.id);
+    }
+  } catch (e) {
+    console.error('Prize crediting error:', e);
+  }
+
+  res.json({ ...data, prizes_awarded: prizesAwarded });
 }));
 
 app.post('/api/admin/new-round', adminOnly, wrap(async (req, res) => {
   const { data: existing } = await supabase.from('rounds').select('id').eq('status', 'active').maybeSingle();
   if (existing) return res.status(400).json({ error: 'A round is already active' });
-  
   const { data, error } = await supabase.from('rounds').insert({ status: 'active' }).select().single();
   if (error) throw error;
-  
   res.json({ message: 'New round created.', round: data });
 }));
 
