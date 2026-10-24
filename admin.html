@@ -124,12 +124,17 @@
         </table>
       </div>
 
+      <p id="adminStatusNote" style="margin-top: 15px; text-align: center; font-size: 13px; color: var(--text-muted); min-height: 20px;"></p>
+      <p style="margin-top: 6px; text-align: center; color: var(--text-muted); font-size: 11px;">
+        Draw fires when: <b>≥ 3 tickets</b> AND (<b>30 min since 3rd ticket</b> OR <b>100/100 sold + 60s cooldown</b>). Winners auto-credited.
+      </p>
+
       <div class="row-btn" style="margin-top: 20px;">
-        <button onclick="draw()" class="accent">🎰 Spin Multi Hot — Draw Winners & Close Round</button>
+        <button onclick="draw()" class="accent">🎰 Spin Multi Hot — Draw Winners Now</button>
         <button onclick="newRound()" class="blue">Start New Round</button>
       </div>
       <p style="margin-top: 12px; text-align: center; color: var(--text-muted); font-size: 11px;">
-        The slot machine animates and reveals the 3 winning card numbers. Winners are auto-credited. All players see the same draw live.
+        Manual draw is optional — the auto-draw engine will trigger on its own. Use it only for early close or emergencies.
       </p>
     </div>
   </div>
@@ -196,6 +201,8 @@
 
   let adminKey = localStorage.getItem('dotBingoAdminKey') || '';
   let timer = null;
+  let adminCountdown = null;
+  let adminLastMeta = null;
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
@@ -276,14 +283,62 @@
 
   async function loadPlayers() {
     try {
-      const { round, players } = await api('/api/admin/players');
+      const resp = await api('/api/admin/players');
+      const { round, players } = resp;
       const body = $('playerBody');
-      if (!round) return body.innerHTML = '<tr><td colspan="3" class="empty">No active round.</td></tr>';
-      if (!players.length) return body.innerHTML = '<tr><td colspan="3" class="empty">No players in this round yet.</td></tr>';
-      body.innerHTML = players.map(p => `<tr><td><b>${esc(p.card_number)}</b></td><td>${esc(p.users?.name)}</td><td>${esc(p.users?.phone)}</td></tr>`).join('');
+
+      if (!round) {
+        body.innerHTML = '<tr><td colspan="3" class="empty">No active round. One will be created automatically.</td></tr>';
+        updateAdminStatus(null);
+        return;
+      }
+      if (!players || !players.length) {
+        body.innerHTML = '<tr><td colspan="3" class="empty">No players in this round yet.</td></tr>';
+        updateAdminStatus(resp);
+        return;
+      }
+      body.innerHTML = players.map(p =>
+        `<tr><td><b>${esc(p.card_number)}</b></td><td>${esc(p.users?.name)}</td><td>${esc(p.users?.phone)}</td></tr>`
+      ).join('');
+      updateAdminStatus(resp);
     } catch (e) {
       $('playerBody').innerHTML = `<tr><td colspan="3" class="empty">${esc(e.message)}</td></tr>`;
     }
+  }
+
+  function updateAdminStatus(resp) {
+    const note = document.getElementById('adminStatusNote');
+    if (!note) return;
+    if (adminCountdown) { clearInterval(adminCountdown); adminCountdown = null; }
+
+    if (!resp || !resp.round) {
+      note.innerHTML = '';
+      return;
+    }
+
+    adminLastMeta = resp;
+
+    const tick = () => {
+      const { round, tickets_sold, min_tickets, qualified_at, auto_draw_at } = adminLastMeta;
+      if (!round) { note.innerHTML = ''; return; }
+
+      if (!qualified_at) {
+        note.innerHTML = `<span style="color:#f57c00;">⏳ Waiting for players (${tickets_sold}/${min_tickets}) — timer will start at ${min_tickets} tickets.</span>`;
+        return;
+      }
+
+      const remain = new Date(auto_draw_at).getTime() - Date.now();
+      if (remain <= 0) {
+        note.innerHTML = `<span style="color:var(--accent);">🔄 Auto-draw is due — will fire on the next poll.</span>`;
+        return;
+      }
+      const mm = Math.floor(remain / 60000);
+      const ss = Math.floor((remain % 60000) / 1000);
+      note.innerHTML = `⏱ Auto-draw in <b style="color:var(--accent);">${mm}:${String(ss).padStart(2,'0')}</b> — ${tickets_sold}/100 sold`;
+    };
+
+    tick();
+    adminCountdown = setInterval(tick, 1000);
   }
 
   async function loadWinners() {
@@ -386,7 +441,7 @@
   }
 
   async function draw() {
-    if (!confirm('Draw winners and close the current round?')) return;
+    if (!confirm('Draw winners now and close the current round?')) return;
     try {
       const data = await api('/api/admin/draw', { method: 'POST' });
       const latest = await api('/api/player/latest-finished-round').catch(() => null);
@@ -402,7 +457,7 @@
         }, 500);
       } else {
         setTimeout(() => {
-          alert('Draw complete. No winning cards to credit (all 3 draws may have been empty).');
+          alert('Draw complete. No winning cards to credit.');
         }, 500);
       }
 
