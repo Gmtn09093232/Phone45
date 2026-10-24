@@ -199,7 +199,7 @@
 
     <div class="panel">
       <h2 data-i18n="selectCards">Select Cards (100 Birr Each)</h2>
-      <p id="roundInfo" style="text-align: center; color: var(--text-muted); font-size: 13px; margin-bottom: 10px;"></p>
+      <p id="roundInfo" style="text-align: center; color: var(--text-muted); font-size: 13px; margin-bottom: 10px; min-height: 22px;"></p>
       <div class="grid" id="numberGrid"></div>
       <p id="selectedInfo" style="text-align: center; color: var(--accent); font-weight: bold; margin-bottom: 10px; min-height: 20px;" data-i18n="noCards">No cards selected</p>
       <button id="playBtn" class="btn-green" onclick="play()" disabled data-i18n="payAndPlay">Pay & Play</button>
@@ -327,10 +327,11 @@
   let selectedNums = new Set();
   let takenNumbers = new Set();
   let pollTimer = null;
+  let countdownInterval = null;
+  let lastMeta = null;
 
   let currentLang = localStorage.getItem('dotBingoLang') || 'en';
 
-  // MULTI HOT draw-detection state
   let lastSeenDrawId = null;
   let baselineInitialized = false;
   let lastKnownDraw = null;
@@ -375,7 +376,12 @@
       lastDraw: "MULTI HOT — Last Draw",
       tapToReplay: "Tap to replay the draw animation",
       drawComplete: "Draw Complete",
-      close: "Close"
+      close: "Close",
+      waitingPlayers: "Waiting for players",
+      autoDrawIn: "Auto-draw in",
+      drawingNow: "Drawing winners...",
+      sold: "sold",
+      noRoundWait: "Waiting for next round to start..."
     },
     am: {
       title: "Number gaming", fullName: "ሙሉ ስም",
@@ -414,7 +420,12 @@
       lastDraw: "MULTI HOT — የመጨረሻ ዕፃ",
       tapToReplay: "እንደገና ለማየት ይንኩ",
       drawComplete: "ዕፃ ተጠናቅቋል",
-      close: "ዝጋ"
+      close: "ዝጋ",
+      waitingPlayers: "ተጫዋቾችን በመጠበቅ ላይ",
+      autoDrawIn: "ራስ-ሰር ዕፃ በ",
+      drawingNow: "አሸናፊዎችን በመሳል ላይ...",
+      sold: "ተሽጠዋል",
+      noRoundWait: "ቀጣይ ዙር እስኪጀመር በመጠበቅ ላይ..."
     }
   };
 
@@ -515,23 +526,68 @@
     } else btn.disabled = false;
   }
 
-  function renderRound(round, taken) {
+  // ===== RENDER ROUND + AUTO-DRAW COUNTDOWN =====
+  function renderRound(round, taken, meta) {
     const t = translations[currentLang];
     takenNumbers = new Set((taken || []).map(Number));
     let changed = false;
     selectedNums.forEach(n => { if (takenNumbers.has(n)) { selectedNums.delete(n); changed = true; } });
     if (changed) updatePlayButton();
+
     document.querySelectorAll('.num').forEach(el => {
       const n = Number(el.dataset.num);
       el.classList.toggle('taken', takenNumbers.has(n));
       if (takenNumbers.has(n)) el.classList.remove('selected');
     });
+
     const info = $('roundInfo');
-    if (info) {
-      info.textContent = round
-        ? `${t.round} #${round.id} — ${takenNumbers.size}/100 ${t.cardsSold}`
-        : t.noActiveRound;
+    if (!info) return;
+
+    if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+
+    if (!round) {
+      info.textContent = t.noRoundWait;
+      return;
     }
+
+    if (!meta || !meta.auto_draw_enabled) {
+      info.textContent = `${t.round} #${round.id} — ${takenNumbers.size}/100 ${t.cardsSold}`;
+      return;
+    }
+
+    lastMeta = { round, meta };
+
+    const drawTick = () => {
+      if (!lastMeta) return;
+      const { round: r, meta: m } = lastMeta;
+      const count = m.tickets_sold || 0;
+      const minT = m.min_tickets || 3;
+
+      if (count < minT) {
+        info.innerHTML = `${t.round} #${r.id} — <b style="color:#f57c00;">${t.waitingPlayers} (${count}/${minT})</b>`;
+        return;
+      }
+
+      if (!m.qualified_at) {
+        info.innerHTML = `${t.round} #${r.id} — <b style="color:#f57c00;">${t.waitingPlayers} (${count}/${minT})</b>`;
+        return;
+      }
+
+      const remaining = new Date(m.auto_draw_at).getTime() - Date.now();
+      if (remaining <= 0) {
+        info.innerHTML = `<b style="color:var(--accent);">${t.drawingNow}</b>`;
+        return;
+      }
+
+      const mm = Math.floor(remaining / 60000);
+      const ss = Math.floor((remaining % 60000) / 1000);
+      const urgent = remaining < 60000;
+      const color = urgent ? '#ff9800' : 'var(--accent)';
+      info.innerHTML = `${t.round} #${r.id} — ${t.autoDrawIn} <b style="color:${color};">${mm}:${String(ss).padStart(2,'0')}</b> — ${count}/100 ${t.sold}`;
+    };
+
+    drawTick();
+    countdownInterval = setInterval(drawTick, 1000);
   }
 
   // ===== AUTH =====
@@ -557,13 +613,12 @@
   async function refresh() {
     if (!currentUser) return;
     try {
-      const [me, round, latestDraw] = await Promise.all([
+      const [me, roundResp, latestDraw] = await Promise.all([
         api(`/api/player/data/${currentUser.id}`),
         api('/api/player/round'),
         api('/api/player/latest-finished-round').catch(() => null)
       ]);
 
-      // Balance flash if it went up
       const oldBalance = Number(currentUser.balance) || 0;
       currentUser.balance = Number(me.balance);
       $('balance').textContent = currentUser.balance.toFixed(2);
@@ -575,7 +630,7 @@
         setTimeout(() => el.classList.remove('balance-flash'), 1600);
       }
 
-      renderRound(round.round, round.taken);
+      renderRound(roundResp.round, roundResp.taken, roundResp);
       updatePlayButton();
 
       if (latestDraw) {
@@ -717,9 +772,7 @@
     }
   }
 
-  // =========================================================
-  // ============= MULTI HOT — DRAW ANIMATION ================
-  // =========================================================
+  // ===== MULTI HOT — DRAW ANIMATION =====
   function updateLastDrawWidget(round) {
     const w = $('lastDrawWidget');
     if (!w) return;
@@ -756,7 +809,6 @@
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const finals = [round.draw_1, round.draw_2, round.draw_3];
 
-    // Reset modal
     ['mslot1','mslot2','mslot3'].forEach(id => {
       const w = $(id);
       w.classList.remove('spinning', 'winner');
@@ -769,12 +821,10 @@
     $('slotModalSub').textContent = 'Drawing winners...';
     $('slotModal').classList.remove('hidden');
 
-    // Fetch win status in parallel
     const winPromise = currentUser
       ? api(`/api/player/win-check/${currentUser.id}/${round.id}`).catch(() => null)
       : Promise.resolve(null);
 
-    // Start cosmetic spin
     const intervals = [];
     if (!prefersReducedMotion) {
       [0,1,2].forEach(i => {
@@ -787,7 +837,6 @@
       });
     }
 
-    // Stop reels one at a time
     for (let i = 0; i < 3; i++) {
       await new Promise(r => setTimeout(r, prefersReducedMotion ? 150 : 700));
       if (intervals[i]) clearInterval(intervals[i]);
@@ -803,7 +852,6 @@
       <div class="slot-result-nums">${finals.join(' · ')}</div>
     `;
 
-    // Show win banner if user won
     const winInfo = await winPromise;
     if (winInfo && winInfo.won && Number(winInfo.amount) > 0) {
       $('slotWinMsg').innerHTML = `
@@ -817,7 +865,6 @@
     $('slotCloseBtn').classList.remove('hidden');
   }
 
-  // ===== BOOT =====
   applyTranslations();
 </script>
 </body>
