@@ -17,8 +17,8 @@ const supabase = createClient(
 const CARD_PRICE = 100;
 const PHONE_RE = /^(?:\+251|251|0)9\d{8}$/;
 
-// ---- Auto-draw config ----
-const AUTO_DRAW_ENABLED = String(process.env.AUTO_DRAW_ENABLED || 'true').toLowerCase() === 'true';
+// ---- Auto-draw: DISABLED. Only the admin manual spin triggers a draw. ----
+const AUTO_DRAW_ENABLED = false;
 const AUTO_DRAW_MIN_MINUTES = Number(process.env.AUTO_DRAW_MIN_MINUTES || 30);
 const AUTO_DRAW_MIN_TICKETS = Number(process.env.AUTO_DRAW_MIN_TICKETS || 3);
 const FULL_BOARD_COOLDOWN_SEC = Number(process.env.FULL_BOARD_COOLDOWN_SEC || 60);
@@ -142,10 +142,10 @@ async function performDrawAndCredit() {
   return { ...data, prizes_awarded: prizesAwarded };
 }
 
-// Auto-draw engine
+// Auto-draw is DISABLED. This helper now only ensures an active round exists
+// so players can keep buying cards. Actual draws happen ONLY when the admin
+// presses "Spin Multi Hot" (POST /api/admin/draw).
 async function maybeAutoDraw() {
-  if (!AUTO_DRAW_ENABLED) return { action: 'disabled' };
-
   const { data: activeRound } = await supabase
     .from('rounds').select('id, created_at').eq('status', 'active').maybeSingle();
 
@@ -154,38 +154,7 @@ async function maybeAutoDraw() {
     return { action: 'created' };
   }
 
-  const { data: tickets } = await supabase
-    .from('tickets').select('created_at').eq('round_id', activeRound.id)
-    .order('created_at', { ascending: true });
-
-  const count = tickets?.length || 0;
-
-  if (count < AUTO_DRAW_MIN_TICKETS) {
-    return { action: 'waiting', reason: 'min-tickets', count, minRequired: AUTO_DRAW_MIN_TICKETS };
-  }
-
-  const qualifiedAt = new Date(tickets[AUTO_DRAW_MIN_TICKETS - 1].created_at).getTime();
-  const elapsed = Date.now() - qualifiedAt;
-  const isFull = count >= 100;
-
-  const timeTrigger = elapsed >= AUTO_DRAW_MIN_MINUTES * 60000;
-  const fullTrigger = isFull && elapsed >= FULL_BOARD_COOLDOWN_SEC * 1000;
-
-  if (!timeTrigger && !fullTrigger) {
-    return {
-      action: 'waiting',
-      reason: isFull ? 'cooldown' : 'timer',
-      count, elapsedMin: Number((elapsed / 60000).toFixed(2))
-    };
-  }
-
-  try {
-    const result = await performDrawAndCredit();
-    return { action: 'drawn', reason: isFull ? 'full' : 'time', result };
-  } catch (e) {
-    console.error('Auto-draw failed:', e);
-    return { action: 'error', error: e.message };
-  }
+  return { action: 'manual-only' };
 }
 
 // Helper to compute countdown meta for a round
@@ -363,7 +332,7 @@ app.get('/api/player/win-check/:user_id/:round_id', wrap(async (req, res) => {
   res.json({ won: amount > 0, amount });
 }));
 
-// ---------- CRON (optional, for Vercel Pro or external scheduler) ----------
+// ---------- CRON (kept for backwards compatibility; no longer draws) ----------
 app.get('/api/cron/auto-draw', async (req, res) => {
   const auth = req.headers.authorization || '';
   const provided = auth.replace(/^Bearer\s+/i, '') || req.query.key;
@@ -438,4 +407,4 @@ app.use((req, res) => res.status(404).json({ error: `No API route for ${req.meth
 app.use((err, req, res, next) => { console.error(err); res.status(500).json({ error: err.message || 'Server error' }); });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server on port ${PORT} | Auto-draw: ${AUTO_DRAW_ENABLED} (${AUTO_DRAW_MIN_MINUTES}min, min ${AUTO_DRAW_MIN_TICKETS} tickets)`));
+app.listen(PORT, () => console.log(`Server on port ${PORT} | Manual-only draw (admin spin)`));
