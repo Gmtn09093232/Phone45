@@ -125,17 +125,11 @@
       </div>
 
       <p id="adminStatusNote" style="margin-top: 15px; text-align: center; font-size: 13px; color: var(--text-muted); min-height: 20px;"></p>
-      <p style="margin-top: 6px; text-align: center; color: var(--text-muted); font-size: 11px;">
-        Draw fires when: <b>≥ 3 tickets</b> AND (<b>30 min since 3rd ticket</b> OR <b>100/100 sold + 60s cooldown</b>). Winners auto-credited.
-      </p>
 
       <div class="row-btn" style="margin-top: 20px;">
         <button onclick="draw()" class="accent">🎰 Spin Multi Hot — Draw Winners Now</button>
         <button onclick="newRound()" class="blue">Start New Round</button>
       </div>
-      <p style="margin-top: 12px; text-align: center; color: var(--text-muted); font-size: 11px;">
-        Manual draw is optional — the auto-draw engine will trigger on its own. Use it only for early close or emergencies.
-      </p>
     </div>
   </div>
 
@@ -201,8 +195,6 @@
 
   let adminKey = localStorage.getItem('dotBingoAdminKey') || '';
   let timer = null;
-  let adminCountdown = null;
-  let adminLastMeta = null;
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
@@ -309,36 +301,14 @@
   function updateAdminStatus(resp) {
     const note = document.getElementById('adminStatusNote');
     if (!note) return;
-    if (adminCountdown) { clearInterval(adminCountdown); adminCountdown = null; }
 
     if (!resp || !resp.round) {
       note.innerHTML = '';
       return;
     }
 
-    adminLastMeta = resp;
-
-    const tick = () => {
-      const { round, tickets_sold, min_tickets, qualified_at, auto_draw_at } = adminLastMeta;
-      if (!round) { note.innerHTML = ''; return; }
-
-      if (!qualified_at) {
-        note.innerHTML = `<span style="color:#f57c00;">⏳ Waiting for players (${tickets_sold}/${min_tickets}) — timer will start at ${min_tickets} tickets.</span>`;
-        return;
-      }
-
-      const remain = new Date(auto_draw_at).getTime() - Date.now();
-      if (remain <= 0) {
-        note.innerHTML = `<span style="color:var(--accent);">🔄 Auto-draw is due — will fire on the next poll.</span>`;
-        return;
-      }
-      const mm = Math.floor(remain / 60000);
-      const ss = Math.floor((remain % 60000) / 1000);
-      note.innerHTML = `⏱ Auto-draw in <b style="color:var(--accent);">${mm}:${String(ss).padStart(2,'0')}</b> — ${tickets_sold}/100 sold`;
-    };
-
-    tick();
-    adminCountdown = setInterval(tick, 1000);
+    const sold = resp.tickets_sold ?? 0;
+    note.innerHTML = `<span style="color:var(--text-muted);">${sold}/100 cards sold — click "Spin Multi Hot" to draw winners.</span>`;
   }
 
   async function loadWinners() {
