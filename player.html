@@ -29,7 +29,7 @@
   .balance-box { flex-shrink: 0; text-align: right; }
   .balance-box b { color: var(--green); font-size: 16px; background: rgba(76, 175, 80, 0.15); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(76, 175, 80, 0.3); display: inline-block; }
   
-  .lang-toggle { background: var(--cell); border: 1px solid #2d3748; color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; margin: 0 10px; }
+  .lang-toggle { background: var(--cell); border: 1px solid #2d3748; color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 20px; display: block; width: 100%; }
 
   .view { display: none; padding: 15px; max-width: 600px; margin: 0 auto; animation: fadeIn 0.3s ease; }
   .view.active { display: block; }
@@ -68,9 +68,14 @@
 
   /* NUMBER GRID */
   .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; margin-bottom: 15px; }
-  .num { background: var(--cell); border: 1px solid #2d3748; padding: 8px 0; cursor: pointer; border-radius: 6px; font-size: 13px; text-align: center; user-select: none; transition: 0.1s; font-weight: 600; color: #e2e8f0; }
+  .num { background: var(--cell); border: 1px solid #2d3748; padding: 8px 0; cursor: pointer; border-radius: 6px; font-size: 13px; text-align: center; user-select: none; transition: 0.2s; font-weight: 600; color: #e2e8f0; }
+  
   .num.selected { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 10px rgba(33, 150, 243, 0.6); }
   .num.taken { background: #0b0f19; border-color: transparent; color: #4a5568; cursor: not-allowed; text-decoration: line-through; }
+  
+  /* NEW: Win / Loss Colors */
+  .num.won { background: rgba(76, 175, 80, 0.2); border-color: var(--green); color: #4CAF50; box-shadow: 0 0 10px rgba(76, 175, 80, 0.5); font-weight: bold; }
+  .num.lost { background: rgba(244, 67, 54, 0.15); border-color: var(--red); color: #f44336; box-shadow: inset 0 0 8px rgba(244, 67, 54, 0.2); }
 
   /* LISTS & HISTORY */
   ul.list { list-style: none; width: 100%; }
@@ -81,7 +86,7 @@
   .tag.rejected { background: #c62828; color: #fff; }
   .tag.pending  { background: #f57c00; color: #fff; }
 
-  /* WINNERS TAB (REDESIGNED) */
+  /* WINNERS TAB */
   .winner-card { background: var(--panel); border-radius: 12px; margin-bottom: 20px; border: 1px solid #2d3748; overflow: hidden; }
   .winner-header { padding: 15px; background: rgba(255,255,255,0.02); border-bottom: 1px solid #2d3748; text-align: center; }
   .winner-round-title { font-size: 20px; font-weight: 800; color: #fff; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px; }
@@ -118,7 +123,7 @@
   .ldw-num { flex: 1; text-align: center; font-size: 20px; font-weight: 900; color: #ffeb3b; background: #050510; border: 2px solid #ff9800; border-radius: 8px; padding: 6px 0; font-family: 'Courier New', monospace; text-shadow: 0 0 8px rgba(255,235,59,0.5); }
   .ldw-sub { font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 8px; }
 
-  /* SLOT MODAL (REDESIGNED) */
+  /* SLOT MODAL */
   .slot-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 15px; animation: fadeIn 0.25s; }
   .slot-modal-inner { width: 100%; max-width: 400px; }
   .slot-machine { background: #0d0f18; border-radius: 16px; padding: 24px 16px; border: 2px solid #331a00; box-shadow: 0 0 50px rgba(255, 152, 0, 0.2); position: relative; }
@@ -173,7 +178,7 @@
   <div class="panel" style="padding: 30px 20px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
       <h2 style="color: var(--accent); margin: 0;" data-i18n="title">Number gaming</h2>
-      <button class="lang-toggle" onclick="toggleLanguage()" id="langToggleBtn">አማርኛ</button>
+      <button class="lang-toggle" onclick="toggleLanguage()" id="langToggleBtn" style="padding: 6px 12px; margin:0; width:auto;">አማርኛ</button>
     </div>
     <input type="text" id="name" placeholder="Full Name" data-i18n-ph="fullName">
     <input type="tel" id="phone" placeholder="Phone Number (09....)" data-i18n-ph="phone">
@@ -184,7 +189,7 @@
 <!-- APP -->
 <div id="appScreen" class="hidden">
 
-  <!-- TOP BAR (Fixed alignment, language button removed) -->
+  <!-- TOP BAR -->
   <div class="top-bar">
     <div class="user-info">
       <span data-i18n="welcome">Welcome,</span>
@@ -295,9 +300,9 @@
     <div class="panel">
       <h2 data-i18n="rulesTitle">Game Rules</h2>
       <ul class="rules-list" id="rulesList"></ul>
-      <div style="margin-top: 25px; text-align: center;">
-        <button class="lang-toggle" onclick="toggleLanguage()" id="langToggleBtn2" style="padding: 10px 20px;">Switch Language</button>
-      </div>
+      
+      <!-- Language button moved here -->
+      <button class="lang-toggle" onclick="toggleLanguage()" id="langToggleBtn2">Switch to አማርኛ</button>
     </div>
   </div>
 
@@ -379,6 +384,8 @@
   let pollTimer = null;
   let countdownInterval = null;
   let lastMeta = null;
+  let latestDrawData = null;
+  let userPastTickets = new Set();
 
   let currentLang = localStorage.getItem('dotBingoLang') || 'en';
 
@@ -486,7 +493,7 @@
     const t = translations[currentLang];
     const btnText = currentLang === 'en' ? 'አማርኛ' : 'English';
     if ($('langToggleBtn')) $('langToggleBtn').textContent = btnText;
-    if ($('langToggleBtn2')) $('langToggleBtn2').textContent = btnText === 'አማርኛ' ? 'Switch to አማርኛ' : 'Switch to English';
+    if ($('langToggleBtn2')) $('langToggleBtn2').textContent = currentLang === 'en' ? 'Switch to አማርኛ' : 'Switch to English';
     
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const key = el.getAttribute('data-i18n');
@@ -552,6 +559,8 @@
       document.querySelector(`.num[data-num="${n}"]`).classList.add('selected');
     }
     updatePlayButton();
+    // Re-apply colors to ensure won/lost doesn't overlap weirdly with selected
+    updateGridColors();
   }
 
   function updatePlayButton() {
@@ -574,19 +583,35 @@
     } else btn.disabled = false;
   }
 
+  // Updates the visual state of the grid
+  function updateGridColors() {
+    document.querySelectorAll('.num').forEach(el => {
+      const n = Number(el.dataset.num);
+      el.classList.remove('taken', 'selected', 'won', 'lost');
+      
+      if (selectedNums.has(n)) {
+        el.classList.add('selected');
+      } else if (takenNumbers.has(n)) {
+        el.classList.add('taken');
+      } else if (userPastTickets.has(n)) {
+        // Check if this number won in the latest draw
+        const isWin = latestDrawData && (n === latestDrawData.draw_1 || n === latestDrawData.draw_2 || n === latestDrawData.draw_3);
+        el.classList.add(isWin ? 'won' : 'lost');
+      }
+    });
+  }
+
   // ===== RENDER ROUND =====
   function renderRound(round, taken, meta) {
     const t = translations[currentLang];
     takenNumbers = new Set((taken || []).map(Number));
+    
+    // Remove any selected numbers that got taken by someone else
     let changed = false;
     selectedNums.forEach(n => { if (takenNumbers.has(n)) { selectedNums.delete(n); changed = true; } });
     if (changed) updatePlayButton();
 
-    document.querySelectorAll('.num').forEach(el => {
-      const n = Number(el.dataset.num);
-      el.classList.toggle('taken', takenNumbers.has(n));
-      if (takenNumbers.has(n)) el.classList.remove('selected');
-    });
+    updateGridColors();
 
     const header = $('roundHeader');
     if (!header) return;
@@ -677,10 +702,8 @@
         setTimeout(() => el.style.color = 'var(--green)', 1000);
       }
 
-      renderRound(roundResp.round, roundResp.taken, roundResp);
-      updatePlayButton();
-
       if (latestDraw) {
+        latestDrawData = latestDraw;
         updateLastDrawWidget(latestDraw);
         lastKnownDraw = latestDraw;
 
@@ -690,10 +713,25 @@
         } else if (latestDraw.id !== lastSeenDrawId) {
           lastSeenDrawId = latestDraw.id;
           if (latestDraw.draw_1 != null && $('slotModal').classList.contains('hidden')) {
-            showSlotAnimation(latestDraw, false); // Play animation for live draw
+            showSlotAnimation(latestDraw, false); // Play animation
           }
         }
+
+        // Fetch user's past tickets for this round to update grid colors
+        try {
+          const hist = await api(`/api/player/history/${currentUser.id}`);
+          userPastTickets.clear();
+          (hist.tickets || []).forEach(tk => {
+            if (tk.rounds && tk.rounds.id === latestDraw.id) {
+              userPastTickets.add(tk.card_number);
+            }
+          });
+        } catch(e) {}
       }
+
+      renderRound(roundResp.round, roundResp.taken, roundResp);
+      updatePlayButton();
+
     } catch (e) { console.error(e); }
   }
 
