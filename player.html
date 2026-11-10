@@ -799,8 +799,17 @@
       });
     }
 
+    const startTime = Date.now();
     for (let i = 0; i < 3; i++) {
-      await new Promise(r => setTimeout(r, prefersReducedMotion ? 150 : 700));
+      // Target times: 10s, 20s, 30s. For reduced motion: 1s, 2s, 3s.
+      const targetMs = prefersReducedMotion ? (i + 1) * 1000 : (i + 1) * 10000;
+      const elapsed = Date.now() - startTime;
+      const waitMs = Math.max(0, targetMs - elapsed);
+
+      if (waitMs > 0) {
+        await new Promise(r => setTimeout(r, waitMs));
+      }
+
       if (intervals[i]) clearInterval(intervals[i]);
       const win = $(`mslot${i+1}`);
       win.classList.remove('spinning');
