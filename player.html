@@ -66,16 +66,11 @@
   .btn-green { background: var(--green); box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3); }
   .btn-red { background: var(--red); }
 
-  /* NUMBER GRID */
+  /* NUMBER GRID (Reverted to normal behavior) */
   .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; margin-bottom: 15px; }
-  .num { background: var(--cell); border: 1px solid #2d3748; padding: 8px 0; cursor: pointer; border-radius: 6px; font-size: 13px; text-align: center; user-select: none; transition: 0.2s; font-weight: 600; color: #e2e8f0; }
-  
+  .num { background: var(--cell); border: 1px solid #2d3748; padding: 8px 0; cursor: pointer; border-radius: 6px; font-size: 13px; text-align: center; user-select: none; transition: 0.1s; font-weight: 600; color: #e2e8f0; }
   .num.selected { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 10px rgba(33, 150, 243, 0.6); }
   .num.taken { background: #0b0f19; border-color: transparent; color: #4a5568; cursor: not-allowed; text-decoration: line-through; }
-  
-  /* NEW: Win / Loss Colors */
-  .num.won { background: rgba(76, 175, 80, 0.2); border-color: var(--green); color: #4CAF50; box-shadow: 0 0 10px rgba(76, 175, 80, 0.5); font-weight: bold; }
-  .num.lost { background: rgba(244, 67, 54, 0.15); border-color: var(--red); color: #f44336; box-shadow: inset 0 0 8px rgba(244, 67, 54, 0.2); }
 
   /* LISTS & HISTORY */
   ul.list { list-style: none; width: 100%; }
@@ -158,6 +153,10 @@
   .slot-window.spinning .slot-number { color: #ffeb3b; animation: slotBlur 0.08s linear infinite; }
   @keyframes slotBlur { 0% { transform: translateY(-6px); opacity: 0.7; } 50% { transform: translateY(6px); opacity: 1; } 100% { transform: translateY(-6px); opacity: 0.7; } }
   
+  /* NEW: Color based on Win / Lose */
+  .slot-window.won .slot-number { color: #4CAF50; text-shadow: 0 0 15px rgba(76, 175, 80, 0.9); }
+  .slot-window.lost .slot-number { color: #f44336; text-shadow: 0 0 15px rgba(244, 67, 54, 0.9); }
+
   .slot-result { text-align: center; min-height: 40px; position: relative; z-index: 2; }
   .slot-result-round { font-size: 14px; font-weight: bold; color: #fff; margin-bottom: 4px; }
   
@@ -559,8 +558,6 @@
       document.querySelector(`.num[data-num="${n}"]`).classList.add('selected');
     }
     updatePlayButton();
-    // Re-apply colors to ensure won/lost doesn't overlap weirdly with selected
-    updateGridColors();
   }
 
   function updatePlayButton() {
@@ -583,24 +580,6 @@
     } else btn.disabled = false;
   }
 
-  // Updates the visual state of the grid
-  function updateGridColors() {
-    document.querySelectorAll('.num').forEach(el => {
-      const n = Number(el.dataset.num);
-      el.classList.remove('taken', 'selected', 'won', 'lost');
-      
-      if (selectedNums.has(n)) {
-        el.classList.add('selected');
-      } else if (takenNumbers.has(n)) {
-        el.classList.add('taken');
-      } else if (userPastTickets.has(n)) {
-        // Check if this number won in the latest draw
-        const isWin = latestDrawData && (n === latestDrawData.draw_1 || n === latestDrawData.draw_2 || n === latestDrawData.draw_3);
-        el.classList.add(isWin ? 'won' : 'lost');
-      }
-    });
-  }
-
   // ===== RENDER ROUND =====
   function renderRound(round, taken, meta) {
     const t = translations[currentLang];
@@ -611,7 +590,11 @@
     selectedNums.forEach(n => { if (takenNumbers.has(n)) { selectedNums.delete(n); changed = true; } });
     if (changed) updatePlayButton();
 
-    updateGridColors();
+    document.querySelectorAll('.num').forEach(el => {
+      const n = Number(el.dataset.num);
+      el.classList.toggle('taken', takenNumbers.has(n));
+      if (takenNumbers.has(n)) el.classList.remove('selected');
+    });
 
     const header = $('roundHeader');
     if (!header) return;
@@ -707,17 +690,7 @@
         updateLastDrawWidget(latestDraw);
         lastKnownDraw = latestDraw;
 
-        if (!baselineInitialized) {
-          lastSeenDrawId = latestDraw.id;
-          baselineInitialized = true;
-        } else if (latestDraw.id !== lastSeenDrawId) {
-          lastSeenDrawId = latestDraw.id;
-          if (latestDraw.draw_1 != null && $('slotModal').classList.contains('hidden')) {
-            showSlotAnimation(latestDraw, false); // Play animation
-          }
-        }
-
-        // Fetch user's past tickets for this round to update grid colors
+        // Fetch user's past tickets for this round BEFORE showing the animation
         try {
           const hist = await api(`/api/player/history/${currentUser.id}`);
           userPastTickets.clear();
@@ -727,6 +700,16 @@
             }
           });
         } catch(e) {}
+
+        if (!baselineInitialized) {
+          lastSeenDrawId = latestDraw.id;
+          baselineInitialized = true;
+        } else if (latestDraw.id !== lastSeenDrawId) {
+          lastSeenDrawId = latestDraw.id;
+          if (latestDraw.draw_1 != null && $('slotModal').classList.contains('hidden')) {
+            showSlotAnimation(latestDraw, false); // Play animation
+          }
+        }
       }
 
       renderRound(roundResp.round, roundResp.taken, roundResp);
@@ -904,7 +887,7 @@
     $('slotMachineContainer').classList.remove('active');
     ['mslot1','mslot2','mslot3'].forEach(id => {
       const w = $(id);
-      w.classList.remove('spinning', 'winner');
+      w.classList.remove('spinning', 'won', 'lost');
       w.querySelector('.slot-number').textContent = '?';
     });
     $('mslotResult').innerHTML = '';
@@ -921,7 +904,7 @@
 
     ['mslot1','mslot2','mslot3'].forEach(id => {
       const w = $(id);
-      w.classList.remove('spinning', 'winner');
+      w.classList.remove('spinning', 'won', 'lost');
       w.querySelector('.slot-number').textContent = '?';
     });
     $('mslotResult').innerHTML = '';
@@ -941,7 +924,8 @@
     if (skipAnimation) {
       for (let i = 0; i < 3; i++) {
         const win = $(`mslot${i+1}`);
-        win.classList.add('winner');
+        const hasCard = userPastTickets.has(finals[i]);
+        win.classList.add(hasCard ? 'won' : 'lost');
         win.querySelector('.slot-number').textContent = finals[i];
       }
     } else {
@@ -986,7 +970,10 @@
         if (intervals[i]) clearInterval(intervals[i]);
         const win = $(`mslot${i+1}`);
         win.classList.remove('spinning');
-        win.classList.add('winner');
+        
+        // Check if user owns this card
+        const hasCard = userPastTickets.has(finals[i]);
+        win.classList.add(hasCard ? 'won' : 'lost');
         win.querySelector('.slot-number').textContent = finals[i];
       }
 
