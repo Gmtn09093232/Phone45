@@ -328,7 +328,6 @@
   let takenNumbers = new Set();
   let pollTimer = null;
   let countdownInterval = null;
-  let lastMeta = null;
 
   let currentLang = localStorage.getItem('dotBingoLang') || 'en';
 
@@ -526,7 +525,7 @@
     } else btn.disabled = false;
   }
 
-  // ===== RENDER ROUND + AUTO-DRAW COUNTDOWN =====
+  // ===== RENDER ROUND =====
   function renderRound(round, taken, meta) {
     const t = translations[currentLang];
     takenNumbers = new Set((taken || []).map(Number));
@@ -550,44 +549,7 @@
       return;
     }
 
-    if (!meta || !meta.auto_draw_enabled) {
-      info.textContent = `${t.round} #${round.id} — ${takenNumbers.size}/100 ${t.cardsSold}`;
-      return;
-    }
-
-    lastMeta = { round, meta };
-
-    const drawTick = () => {
-      if (!lastMeta) return;
-      const { round: r, meta: m } = lastMeta;
-      const count = m.tickets_sold || 0;
-      const minT = m.min_tickets || 3;
-
-      if (count < minT) {
-        info.innerHTML = `${t.round} #${r.id} — <b style="color:#f57c00;">${t.waitingPlayers} (${count}/${minT})</b>`;
-        return;
-      }
-
-      if (!m.qualified_at) {
-        info.innerHTML = `${t.round} #${r.id} — <b style="color:#f57c00;">${t.waitingPlayers} (${count}/${minT})</b>`;
-        return;
-      }
-
-      const remaining = new Date(m.auto_draw_at).getTime() - Date.now();
-      if (remaining <= 0) {
-        info.innerHTML = `<b style="color:var(--accent);">${t.drawingNow}</b>`;
-        return;
-      }
-
-      const mm = Math.floor(remaining / 60000);
-      const ss = Math.floor((remaining % 60000) / 1000);
-      const urgent = remaining < 60000;
-      const color = urgent ? '#ff9800' : 'var(--accent)';
-      info.innerHTML = `${t.round} #${r.id} — ${t.autoDrawIn} <b style="color:${color};">${mm}:${String(ss).padStart(2,'0')}</b> — ${count}/100 ${t.sold}`;
-    };
-
-    drawTick();
-    countdownInterval = setInterval(drawTick, 1000);
+    info.textContent = `${t.round} #${round.id} — ${takenNumbers.size}/100 ${t.cardsSold}`;
   }
 
   // ===== AUTH =====
