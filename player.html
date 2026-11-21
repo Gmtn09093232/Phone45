@@ -38,7 +38,7 @@
   .panel { background: var(--panel); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
   h2 { font-size: 18px; margin-bottom: 15px; text-align: center; color: #fff; }
 
-  /* DRAW COUNTDOWN BANNER (NOTIFICATION ONLY — ADMIN SPINS MANUALLY AT 8 PM EAT) */
+  /* DRAW NOTIFICATION BANNER */
   .draw-countdown-banner {
     background: linear-gradient(135deg, #ff6b00 0%, #ff9800 100%);
     border-radius: 12px;
@@ -127,12 +127,41 @@
 
   input, select, textarea, button { padding: 14px; margin-bottom: 10px; border-radius: 8px; border: none; width: 100%; font-size: 16px; }
   input, select, textarea { background: var(--cell); color: #fff; border: 1px solid #2d3748; font-family: inherit; }
-  textarea { resize: vertical; min-height: 48px; }
   button { background: var(--accent); color: #fff; cursor: pointer; font-weight: bold; transition: 0.2s; }
   button:active { opacity: 0.8; transform: scale(0.98); }
   button:disabled { background: #2d3748; color: #8892b0; cursor: not-allowed; transform: none; }
   .btn-green { background: var(--green); box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3); }
   .btn-red { background: var(--red); }
+
+  /* LONG-TEXT TRANSACTION / SMS FIELD */
+  #depProof {
+    resize: vertical;
+    min-height: 110px;
+    max-height: 360px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    line-height: 1.55;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  #depProof:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.25);
+  }
+  .proof-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin: -4px 2px 6px 2px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    line-height: 1.4;
+  }
+  .proof-count { flex-shrink: 0; font-family: 'Courier New', monospace; font-weight: bold; color: var(--accent); }
 
   /* WALLET TABS */
   .wallet-tabs { display: flex; gap: 8px; margin-bottom: 15px; background: var(--panel); padding: 6px; border-radius: 12px; border: 1px solid #2d3748; }
@@ -201,7 +230,6 @@
   .slot-modal-inner { width: 100%; max-width: 400px; }
   .slot-machine { background: #0d0f18; border-radius: 16px; padding: 24px 16px; border: 2px solid #331a00; box-shadow: 0 0 50px rgba(255, 152, 0, 0.2); position: relative; }
   
-  /* Neon Lights */
   .slot-lights { display: flex; justify-content: space-between; margin: 0 -4px 15px; position: relative; }
   .slot-lights::before, .slot-lights::after { content: ''; position: absolute; left: 0; right: 0; height: 4px; background: #ff9800; border-radius: 2px; box-shadow: 0 0 10px #ff9800, 0 0 20px #ff9800; }
   .slot-lights::before { top: 0; }
@@ -279,7 +307,6 @@
   <!-- PLAY VIEW -->
   <div id="view-play" class="view active">
 
-    <!-- DRAW NOTIFICATION BANNER — Admin spins the multi-slot manually at 8:00 PM EAT -->
     <div class="draw-countdown-banner">
       <span class="dcb-icon">🎰</span>
       <div class="dcb-text">
@@ -288,7 +315,7 @@
       </div>
     </div>
     
-    <!-- ROUND HEADER — No auto-draw timer; draw is triggered by admin -->
+    <!-- ROUND HEADER — admin triggers the draw -->
     <div class="round-header" id="roundHeader" style="display:none;">
       <div class="rh-left">
         <div class="rh-title" id="rhRoundId">Round #...</div>
@@ -370,7 +397,11 @@
       <select id="depMethod">
         <option value="telebirr">Telebirr</option>
       </select>
-      <textarea id="depProof" placeholder="Transaction ID / SMS Reference" data-i18n-ph="proof" rows="1"></textarea>
+      <textarea id="depProof" placeholder="Transaction ID / SMS Reference" data-i18n-ph="proof" rows="3" spellcheck="false" autocomplete="off"></textarea>
+      <div class="proof-hint">
+        <span data-i18n="proofHint">Paste the full SMS — no length limit.</span>
+        <span class="proof-count" id="depProofCount">0</span>
+      </div>
       <button class="btn-green" onclick="handleDeposit()" data-i18n="submitDeposit">Submit Deposit</button>
     </div>
   </div>
@@ -504,6 +535,7 @@
       noActivity: "No recent activity.",
       depositTitle: "💰 Deposit", amount: "Amount (Birr)",
       proof: "Transaction ID / SMS Reference", submitDeposit: "Submit Deposit",
+      proofHint: "Paste the full SMS — no length limit.",
       withdrawTitle: "💸 Withdraw", account: "Account Number / Phone Number",
       submitWithdraw: "Submit Withdraw", rulesTitle: "Game Rules",
       navPlay: "Play", navWinners: "Winners", navActivity: "Activity",
@@ -547,6 +579,7 @@
       noActivity: "ከቅርብ ጊዜ ጀምሮ እንቅስቃሴ የለም።",
       depositTitle: "💰 ገቢ ማድረግ", amount: "መጠን (ብር)",
       proof: "የግብይት መለያ / የSMS ማጣቀሻ", submitDeposit: "ገቢ አስገባ",
+      proofHint: "ሙሉውን SMS ይለጥፉ — የፊደል ብዛት ገደብ የለም።",
       withdrawTitle: "💸 ገንዘብ ማውጣት", account: "የሂሳብ ቁጥር / የስልክ ቁጥር",
       submitWithdraw: "ማውጣት አስገባ", rulesTitle: "የጨዋታ ደንቦች",
       navPlay: "ተጫወት", navWinners: "አሸናፊዎች", navActivity: "እንቅስቃሴ",
@@ -604,6 +637,7 @@
     const rulesList = $('rulesList');
     if (rulesList) rulesList.innerHTML = `<li>${t.rule1}</li><li>${t.rule2}</li><li>${t.rule3}</li><li>${t.rule4}</li><li>${t.rule5}</li><li>${t.rule6}</li><li>${t.rule7}</li>`;
     updatePlayButton();
+    autoGrowDepProof();
     if (currentUser) { refresh(); loadHistory(); loadWinners(); }
   }
 
@@ -627,6 +661,18 @@
     document.querySelectorAll('.wallet-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === viewName));
     if (viewName === 'winners') loadWinners();
     if (viewName === 'activity') loadHistory();
+    if (viewName === 'deposit') setTimeout(autoGrowDepProof, 30);
+  }
+
+  // ===== LONG-TEXT PROOF FIELD: AUTO-GROW, NO LIMIT =====
+  function autoGrowDepProof() {
+    const ta = $('depProof');
+    if (!ta) return;
+    ta.style.height = 'auto';
+    const newH = Math.min(Math.max(ta.scrollHeight, 110), 360);
+    ta.style.height = newH + 'px';
+    const counter = $('depProofCount');
+    if (counter) counter.textContent = ta.value.length;
   }
 
   // ===== COPY TELEBIRR NUMBER =====
@@ -657,9 +703,8 @@
     }
   }
 
-  // ===== DRAW NOTIFICATION COUNTDOWN — 8:00 PM ETHIOPIAN TIME (EAT = UTC+3) =====
-  // This is NOT an auto-draw. The admin manually triggers the Multi Hot spin at 8:00 PM EAT.
-  // The countdown is only a notification for players.
+  // ===== DRAW NOTIFICATION COUNTDOWN — 8:00 PM EAT =====
+  // Purely informational. The admin triggers the Multi Hot spin at 8:00 PM EAT.
   function getNextDrawRemainingMs() {
     const now = new Date();
     const eatNowMs = now.getTime() + (now.getTimezoneOffset() * 60000) + (3 * 3600000);
@@ -736,7 +781,7 @@
     } else btn.disabled = false;
   }
 
-  // ===== RENDER ROUND — No auto-draw timer =====
+  // ===== RENDER ROUND — no auto-draw =====
   function renderRound(round, taken) {
     const t = translations[currentLang];
     takenNumbers = new Set((taken || []).map(Number));
@@ -841,6 +886,7 @@
   async function handleDeposit() {
     const amount = Number($('depAmount').value);
     const method = $('depMethod').value;
+    // Send the ENTIRE text exactly as typed/pasted — no truncation, no maxlength.
     const proof = $('depProof').value.trim();
     if (!Number.isFinite(amount) || amount <= 0) return alert('Enter a valid amount.');
     if (!proof) return alert('Enter the Transaction ID / SMS Reference.');
@@ -848,6 +894,7 @@
       const data = await api('/api/player/deposit', { method: 'POST', body: JSON.stringify({ user_id: currentUser.id, amount, method, proof }) });
       alert(data.message);
       $('depAmount').value = ''; $('depProof').value = '';
+      autoGrowDepProof();
       await loadHistory();
     } catch (e) { alert(e.message); }
   }
@@ -1112,6 +1159,16 @@
 
     $('slotCloseBtn').classList.remove('hidden');
   }
+
+  // ===== INIT PROOF FIELD LISTENERS =====
+  (function initProofField() {
+    const ta = $('depProof');
+    if (!ta) return;
+    ta.addEventListener('input', autoGrowDepProof);
+    ta.addEventListener('paste', () => setTimeout(autoGrowDepProof, 0));
+    ta.addEventListener('change', autoGrowDepProof);
+    autoGrowDepProof();
+  })();
 
   applyTranslations();
 </script>
