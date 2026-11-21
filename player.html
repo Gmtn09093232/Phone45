@@ -307,10 +307,11 @@
   <!-- PLAY VIEW -->
   <div id="view-play" class="view active">
 
+    <!-- DRAW NOTIFICATION BANNER — admin spins the multi-slot manually at 6:00 PM EAT -->
     <div class="draw-countdown-banner">
       <span class="dcb-icon">🎰</span>
       <div class="dcb-text">
-        <div class="dcb-label" data-i18n="nextDrawAt">🎰 Next Draw at 8:00 PM (EAT)</div>
+        <div class="dcb-label" data-i18n="nextDrawAt">🎰 Next Draw at 6:00 PM (EAT)</div>
         <div class="dcb-timer" id="drawCountdown">00:00:00</div>
       </div>
     </div>
@@ -323,9 +324,9 @@
         <div class="rh-sub"><span id="rhSold">0</span>/100 <span data-i18n="cardsSold">cards sold</span></div>
       </div>
       <div class="rh-right">
-        <div class="rh-clock">🕗</div>
+        <div class="rh-clock">🕕</div>
         <div class="rh-timer-label" data-i18n="drawTime">Draw time</div>
-        <div class="rh-timer-val">8:00 PM</div>
+        <div class="rh-timer-val">6:00 PM</div>
       </div>
     </div>
 
@@ -555,7 +556,7 @@
       rule4: "Prize Pool: 60% 1st, 10% 2nd, 5% 3rd.",
       rule5: "Deposits require a valid SMS transaction reference and are approved by an admin.",
       rule6: "Withdrawals are processed by the admin to the account details you provide.",
-      rule7: "The Multi Hot slot draw is triggered by the admin daily at 8:00 PM Ethiopian Time (EAT).",
+      rule7: "The Multi Hot slot draw is triggered by the admin daily at 6:00 PM Ethiopian Time (EAT).",
       first: "1st", second: "2nd", third: "3rd",
       lastDraw: "MULTI HOT — Last Draw",
       tapToReplay: "Tap to view draw results",
@@ -564,7 +565,7 @@
       drawingNow: "Drawing winners...",
       youWon: "You Won!",
       copy: "Copy", copied: "Copied!",
-      nextDrawAt: "🎰 Next Draw at 8:00 PM (EAT)",
+      nextDrawAt: "🎰 Next Draw at 6:00 PM (EAT)",
       drawTime: "Draw time"
     },
     am: {
@@ -600,7 +601,7 @@
       rule4: "የሽልማት ክፍፍል፡ 60% ለ1ኛ፣ 10% ለ2ኛ፣ 5% ለ3ኛ።",
       rule5: "ገቢ ለማድረግ ትክክለኛ የSMS ማጣቀሻ ያስፈልጋል እና በአስተዳዳሪ ይፈቀዳል።",
       rule6: "ገንዘብ ማውጣት በአስተዳዳሪ በኩል ይከናወናል።",
-      rule7: "የMulti Hot ስሎት ዕፃ በአስተዳዳሪ በየቀኑ በ8:00 ምሽት የኢትዮጵያ ሰዓት (EAT) ይጀመራል።",
+      rule7: "የMulti Hot ስሎት ዕፃ በአስተዳዳሪ በየቀኑ በ6:00 ምሽት የኢትዮጵያ ሰዓት (EAT) ይጀመራል።",
       first: "1ኛ", second: "2ኛ", third: "3ኛ",
       lastDraw: "MULTI HOT — የመጨረሻ ዕፃ",
       tapToReplay: "ውጤቶችን ለማየት ይንኩ",
@@ -609,7 +610,7 @@
       drawingNow: "አሸናፊዎችን በመሳል ላይ...",
       youWon: "አሸንፈዋል!",
       copy: "ቅዳ", copied: "ተቀድቷል!",
-      nextDrawAt: "🎰 ቀጣይ ዕፃ በ8:00 ምሽት (EAT)",
+      nextDrawAt: "🎰 ቀጣይ ዕፃ በ6:00 ምሽት (EAT)",
       drawTime: "የዕፃ ሰዓት"
     }
   };
@@ -703,8 +704,8 @@
     }
   }
 
-  // ===== DRAW NOTIFICATION COUNTDOWN — 8:00 PM EAT =====
-  // Purely informational. The admin triggers the Multi Hot spin at 8:00 PM EAT.
+  // ===== DRAW NOTIFICATION COUNTDOWN — 6:00 PM EAT (18:00 UTC+3) =====
+  // Purely informational. The admin triggers the Multi Hot spin at 6:00 PM EAT.
   function getNextDrawRemainingMs() {
     const now = new Date();
     const eatNowMs = now.getTime() + (now.getTimezoneOffset() * 60000) + (3 * 3600000);
@@ -713,7 +714,7 @@
       eatNow.getUTCFullYear(),
       eatNow.getUTCMonth(),
       eatNow.getUTCDate(),
-      20, 0, 0, 0
+      18, 0, 0, 0   // 6:00 PM EAT
     );
     let remaining = targetMs - eatNowMs;
     if (remaining <= 0) remaining += 24 * 3600000;
@@ -886,7 +887,6 @@
   async function handleDeposit() {
     const amount = Number($('depAmount').value);
     const method = $('depMethod').value;
-    // Send the ENTIRE text exactly as typed/pasted — no truncation, no maxlength.
     const proof = $('depProof').value.trim();
     if (!Number.isFinite(amount) || amount <= 0) return alert('Enter a valid amount.');
     if (!proof) return alert('Enter the Transaction ID / SMS Reference.');
