@@ -38,6 +38,73 @@
   .panel { background: var(--panel); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
   h2 { font-size: 18px; margin-bottom: 15px; text-align: center; color: #fff; }
 
+  /* DRAW COUNTDOWN BANNER (NOTIFICATION ONLY — ADMIN SPINS MANUALLY AT 8 PM EAT) */
+  .draw-countdown-banner {
+    background: linear-gradient(135deg, #ff6b00 0%, #ff9800 100%);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 4px 20px rgba(255, 152, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    animation: drawPulse 2.4s ease-in-out infinite;
+    position: relative;
+    overflow: hidden;
+  }
+  .draw-countdown-banner::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%);
+    animation: shimmer 3s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes shimmer {
+    0% { transform: translateX(-100%) rotate(0deg); }
+    100% { transform: translateX(100%) rotate(0deg); }
+  }
+  @keyframes drawPulse {
+    0%, 100% { box-shadow: 0 4px 20px rgba(255, 152, 0, 0.35); }
+    50% { box-shadow: 0 4px 32px rgba(255, 152, 0, 0.7); }
+  }
+  .dcb-icon {
+    font-size: 30px;
+    animation: spinSlow 4s linear infinite;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    position: relative;
+    z-index: 1;
+  }
+  @keyframes spinSlow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .dcb-text { flex: 1; position: relative; z-index: 1; }
+  .dcb-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.92);
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .dcb-timer {
+    font-size: 28px;
+    font-weight: 900;
+    color: #fff;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 3px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.45);
+    line-height: 1;
+  }
+  .dcb-timer.urgent {
+    color: #ffeb3b;
+    animation: urgentBlink 0.7s ease-in-out infinite alternate;
+  }
+  @keyframes urgentBlink { from { opacity: 1; } to { opacity: 0.55; } }
+
   /* ROUND INFO HEADER */
   .round-header { background: var(--panel); border-radius: 12px; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #2d3748; }
   .rh-left { flex: 1; padding-right: 15px; border-right: 1px solid #2d3748; }
@@ -77,7 +144,7 @@
   .copy-num { font-family: 'Courier New', monospace; font-weight: bold; color: #fff; letter-spacing: 0.5px; cursor: pointer; }
   .copy-num:active { color: var(--green); }
 
-  /* NUMBER GRID (Reverted to normal behavior) */
+  /* NUMBER GRID */
   .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; margin-bottom: 15px; }
   .num { background: var(--cell); border: 1px solid #2d3748; padding: 8px 0; cursor: pointer; border-radius: 6px; font-size: 13px; text-align: center; user-select: none; transition: 0.1s; font-weight: 600; color: #e2e8f0; }
   .num.selected { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 10px rgba(33, 150, 243, 0.6); }
@@ -150,7 +217,6 @@
   .slot-windows { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; position: relative; z-index: 2; }
   .slot-window { background: #050510; border-radius: 8px; padding: 10px 4px; text-align: center; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); position: relative; }
   
-  /* Gold, Silver, Bronze Borders */
   .slot-window:nth-child(1) { border: 2px solid #FFD700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.3), inset 0 0 15px rgba(255, 215, 0, 0.1); }
   .slot-window:nth-child(2) { border: 2px solid #C0C0C0; box-shadow: 0 0 15px rgba(192, 192, 192, 0.3), inset 0 0 15px rgba(192, 192, 192, 0.1); }
   .slot-window:nth-child(3) { border: 2px solid #CD7F32; box-shadow: 0 0 15px rgba(205, 127, 50, 0.3), inset 0 0 15px rgba(205, 127, 50, 0.1); }
@@ -164,7 +230,6 @@
   .slot-window.spinning .slot-number { color: #ffeb3b; animation: slotBlur 0.08s linear infinite; }
   @keyframes slotBlur { 0% { transform: translateY(-6px); opacity: 0.7; } 50% { transform: translateY(6px); opacity: 1; } 100% { transform: translateY(-6px); opacity: 0.7; } }
   
-  /* NEW: Color based on Win / Lose */
   .slot-window.won .slot-number { color: #4CAF50; text-shadow: 0 0 15px rgba(76, 175, 80, 0.9); }
   .slot-window.lost .slot-number { color: #f44336; text-shadow: 0 0 15px rgba(244, 67, 54, 0.9); }
 
@@ -178,6 +243,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .slot-window.spinning .slot-number { animation: none; }
+    .draw-countdown-banner, .dcb-icon, .dcb-timer.urgent { animation: none; }
   }
 </style>
 </head>
@@ -212,18 +278,27 @@
 
   <!-- PLAY VIEW -->
   <div id="view-play" class="view active">
+
+    <!-- DRAW NOTIFICATION BANNER — Admin spins the multi-slot manually at 8:00 PM EAT -->
+    <div class="draw-countdown-banner">
+      <span class="dcb-icon">🎰</span>
+      <div class="dcb-text">
+        <div class="dcb-label" data-i18n="nextDrawAt">🎰 Next Draw at 8:00 PM (EAT)</div>
+        <div class="dcb-timer" id="drawCountdown">00:00:00</div>
+      </div>
+    </div>
     
-    <!-- ROUND HEADER -->
+    <!-- ROUND HEADER — No auto-draw timer; draw is triggered by admin -->
     <div class="round-header" id="roundHeader" style="display:none;">
       <div class="rh-left">
         <div class="rh-title" id="rhRoundId">Round #...</div>
         <div class="rh-progress-bg"><div class="rh-progress-fill" id="rhProgress"></div></div>
         <div class="rh-sub"><span id="rhSold">0</span>/100 <span data-i18n="cardsSold">cards sold</span></div>
       </div>
-      <div class="rh-right" id="rhTimerBox">
-        <div class="rh-clock">⏱</div>
-        <div class="rh-timer-label" data-i18n="autoDrawIn">Auto-draw in</div>
-        <div class="rh-timer-val" id="rhTimer">--:--</div>
+      <div class="rh-right">
+        <div class="rh-clock">🕗</div>
+        <div class="rh-timer-label" data-i18n="drawTime">Draw time</div>
+        <div class="rh-timer-val">8:00 PM</div>
       </div>
     </div>
 
@@ -325,7 +400,6 @@
       <h2 data-i18n="rulesTitle">Game Rules</h2>
       <ul class="rules-list" id="rulesList"></ul>
       
-      <!-- Language button moved here -->
       <button class="lang-toggle" onclick="toggleLanguage()" id="langToggleBtn2">Switch to አማርኛ</button>
     </div>
   </div>
@@ -406,8 +480,6 @@
   let selectedNums = new Set();
   let takenNumbers = new Set();
   let pollTimer = null;
-  let countdownInterval = null;
-  let lastMeta = null;
   let latestDrawData = null;
   let userPastTickets = new Set();
 
@@ -451,17 +523,17 @@
       rule4: "Prize Pool: 60% 1st, 10% 2nd, 5% 3rd.",
       rule5: "Deposits require a valid SMS transaction reference and are approved by an admin.",
       rule6: "Withdrawals are processed by the admin to the account details you provide.",
+      rule7: "The Multi Hot slot draw is triggered by the admin daily at 8:00 PM Ethiopian Time (EAT).",
       first: "1st", second: "2nd", third: "3rd",
       lastDraw: "MULTI HOT — Last Draw",
       tapToReplay: "Tap to view draw results",
       drawComplete: "Draw Complete",
       close: "Close",
-      waitingPlayers: "Waiting for players",
-      autoDrawIn: "Auto-draw in",
       drawingNow: "Drawing winners...",
-      noRoundWait: "Waiting for next round...",
       youWon: "You Won!",
-      copy: "Copy", copied: "Copied!"
+      copy: "Copy", copied: "Copied!",
+      nextDrawAt: "🎰 Next Draw at 8:00 PM (EAT)",
+      drawTime: "Draw time"
     },
     am: {
       title: "Number gaming", fullName: "ሙሉ ስም",
@@ -495,17 +567,17 @@
       rule4: "የሽልማት ክፍፍል፡ 60% ለ1ኛ፣ 10% ለ2ኛ፣ 5% ለ3ኛ።",
       rule5: "ገቢ ለማድረግ ትክክለኛ የSMS ማጣቀሻ ያስፈልጋል እና በአስተዳዳሪ ይፈቀዳል።",
       rule6: "ገንዘብ ማውጣት በአስተዳዳሪ በኩል ይከናወናል።",
+      rule7: "የMulti Hot ስሎት ዕፃ በአስተዳዳሪ በየቀኑ በ8:00 ምሽት የኢትዮጵያ ሰዓት (EAT) ይጀመራል።",
       first: "1ኛ", second: "2ኛ", third: "3ኛ",
       lastDraw: "MULTI HOT — የመጨረሻ ዕፃ",
       tapToReplay: "ውጤቶችን ለማየት ይንኩ",
       drawComplete: "ዕፃ ተጠናቅቋል",
       close: "ዝጋ",
-      waitingPlayers: "ተጫዋቾችን በመጠበቅ ላይ",
-      autoDrawIn: "ራስ-ሰር ዕፃ በ",
       drawingNow: "አሸናፊዎችን በመሳል ላይ...",
-      noRoundWait: "ቀጣይ ዙር እስኪጀመር በመጠበቅ ላይ...",
       youWon: "አሸንፈዋል!",
-      copy: "ቅዳ", copied: "ተቀድቷል!"
+      copy: "ቅዳ", copied: "ተቀድቷል!",
+      nextDrawAt: "🎰 ቀጣይ ዕፃ በ8:00 ምሽት (EAT)",
+      drawTime: "የዕፃ ሰዓት"
     }
   };
 
@@ -530,7 +602,7 @@
       if (t[key]) el.placeholder = t[key];
     });
     const rulesList = $('rulesList');
-    if (rulesList) rulesList.innerHTML = `<li>${t.rule1}</li><li>${t.rule2}</li><li>${t.rule3}</li><li>${t.rule4}</li><li>${t.rule5}</li><li>${t.rule6}</li>`;
+    if (rulesList) rulesList.innerHTML = `<li>${t.rule1}</li><li>${t.rule2}</li><li>${t.rule3}</li><li>${t.rule4}</li><li>${t.rule5}</li><li>${t.rule6}</li><li>${t.rule7}</li>`;
     updatePlayButton();
     if (currentUser) { refresh(); loadHistory(); loadWinners(); }
   }
@@ -585,6 +657,42 @@
     }
   }
 
+  // ===== DRAW NOTIFICATION COUNTDOWN — 8:00 PM ETHIOPIAN TIME (EAT = UTC+3) =====
+  // This is NOT an auto-draw. The admin manually triggers the Multi Hot spin at 8:00 PM EAT.
+  // The countdown is only a notification for players.
+  function getNextDrawRemainingMs() {
+    const now = new Date();
+    const eatNowMs = now.getTime() + (now.getTimezoneOffset() * 60000) + (3 * 3600000);
+    const eatNow = new Date(eatNowMs);
+    let targetMs = Date.UTC(
+      eatNow.getUTCFullYear(),
+      eatNow.getUTCMonth(),
+      eatNow.getUTCDate(),
+      20, 0, 0, 0
+    );
+    let remaining = targetMs - eatNowMs;
+    if (remaining <= 0) remaining += 24 * 3600000;
+    return remaining;
+  }
+
+  function updateDrawCountdown() {
+    const el = $('drawCountdown');
+    if (!el) return;
+    const remaining = getNextDrawRemainingMs();
+    const h = Math.floor(remaining / 3600000);
+    const m = Math.floor((remaining % 3600000) / 60000);
+    const s = Math.floor((remaining % 60000) / 1000);
+    el.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    if (remaining < 3600000) {
+      el.classList.add('urgent');
+    } else {
+      el.classList.remove('urgent');
+    }
+  }
+
+  updateDrawCountdown();
+  setInterval(updateDrawCountdown, 1000);
+
   // ===== NUMBER GAME =====
   const grid = $('numberGrid');
   for (let i = 1; i <= 100; i++) {
@@ -628,12 +736,11 @@
     } else btn.disabled = false;
   }
 
-  // ===== RENDER ROUND =====
-  function renderRound(round, taken, meta) {
+  // ===== RENDER ROUND — No auto-draw timer =====
+  function renderRound(round, taken) {
     const t = translations[currentLang];
     takenNumbers = new Set((taken || []).map(Number));
     
-    // Remove any selected numbers that got taken by someone else
     let changed = false;
     selectedNums.forEach(n => { if (takenNumbers.has(n)) { selectedNums.delete(n); changed = true; } });
     if (changed) updatePlayButton();
@@ -647,8 +754,6 @@
     const header = $('roundHeader');
     if (!header) return;
 
-    if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
-
     if (!round) {
       header.style.display = 'none';
       return;
@@ -660,39 +765,6 @@
     const count = takenNumbers.size;
     $('rhSold').textContent = count;
     $('rhProgress').style.width = `${count}%`;
-
-    if (!meta || !meta.auto_draw_enabled) {
-      $('rhTimerBox').style.display = 'none';
-      return;
-    }
-
-    $('rhTimerBox').style.display = 'flex';
-    lastMeta = { round, meta };
-
-    const drawTick = () => {
-      if (!lastMeta) return;
-      const { round: r, meta: m } = lastMeta;
-      const tCount = m.tickets_sold || 0;
-      const minT = m.min_tickets || 3;
-
-      if (tCount < minT || !m.qualified_at) {
-        $('rhTimer').textContent = t.waitingPlayers;
-        return;
-      }
-
-      const remaining = new Date(m.auto_draw_at).getTime() - Date.now();
-      if (remaining <= 0) {
-        $('rhTimer').textContent = t.drawingNow;
-        return;
-      }
-
-      const mm = Math.floor(remaining / 60000);
-      const ss = Math.floor((remaining % 60000) / 1000);
-      $('rhTimer').textContent = `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
-    };
-
-    drawTick();
-    countdownInterval = setInterval(drawTick, 1000);
   }
 
   // ===== AUTH =====
@@ -738,7 +810,6 @@
         updateLastDrawWidget(latestDraw);
         lastKnownDraw = latestDraw;
 
-        // Fetch user's past tickets for this round BEFORE showing the animation
         try {
           const hist = await api(`/api/player/history/${currentUser.id}`);
           userPastTickets.clear();
@@ -755,12 +826,12 @@
         } else if (latestDraw.id !== lastSeenDrawId) {
           lastSeenDrawId = latestDraw.id;
           if (latestDraw.draw_1 != null && $('slotModal').classList.contains('hidden')) {
-            showSlotAnimation(latestDraw, false); // Play animation
+            showSlotAnimation(latestDraw, false);
           }
         }
       }
 
-      renderRound(roundResp.round, roundResp.taken, roundResp);
+      renderRound(roundResp.round, roundResp.taken);
       updatePlayButton();
 
     } catch (e) { console.error(e); }
@@ -926,7 +997,7 @@
 
   function replayLastDraw() {
     if (lastKnownDraw && lastKnownDraw.draw_1 != null) {
-      showSlotAnimation(lastKnownDraw, true); // TRUE = Skip spinning animation
+      showSlotAnimation(lastKnownDraw, true);
     }
   }
 
@@ -968,7 +1039,6 @@
       ? api(`/api/player/win-check/${currentUser.id}/${round.id}`).catch(() => null)
       : Promise.resolve(null);
 
-    // Skip spinning if requested (clicking Last Draw)
     if (skipAnimation) {
       for (let i = 0; i < 3; i++) {
         const win = $(`mslot${i+1}`);
@@ -977,7 +1047,6 @@
         win.querySelector('.slot-number').textContent = finals[i];
       }
     } else {
-      // Play normal animation
       let lightToggle = true;
       const lightInterval = setInterval(() => {
         lightToggle = !lightToggle;
@@ -1019,7 +1088,6 @@
         const win = $(`mslot${i+1}`);
         win.classList.remove('spinning');
         
-        // Check if user owns this card
         const hasCard = userPastTickets.has(finals[i]);
         win.classList.add(hasCard ? 'won' : 'lost');
         win.querySelector('.slot-number').textContent = finals[i];
