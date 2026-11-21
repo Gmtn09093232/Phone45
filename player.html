@@ -66,6 +66,16 @@
   .btn-green { background: var(--green); box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3); }
   .btn-red { background: var(--red); }
 
+  /* WALLET TABS */
+  .wallet-tabs { display: flex; gap: 8px; margin-bottom: 15px; background: var(--panel); padding: 6px; border-radius: 12px; border: 1px solid #2d3748; }
+  .wallet-tab { flex: 1; margin: 0; padding: 12px; background: transparent; color: var(--text-muted); font-weight: bold; font-size: 14px; border-radius: 8px; }
+  .wallet-tab.active { background: var(--accent); color: #fff; box-shadow: 0 4px 10px rgba(33, 150, 243, 0.35); }
+
+  /* COPY BUTTON */
+  .copy-btn { width: auto; margin: 0; padding: 6px 12px; font-size: 12px; border-radius: 6px; background: var(--accent); flex-shrink: 0; }
+  .copy-num { font-family: 'Courier New', monospace; font-weight: bold; color: #fff; letter-spacing: 0.5px; cursor: pointer; }
+  .copy-num:active { color: var(--green); }
+
   /* NUMBER GRID (Reverted to normal behavior) */
   .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; margin-bottom: 15px; }
   .num { background: var(--cell); border: 1px solid #2d3748; padding: 8px 0; cursor: pointer; border-radius: 6px; font-size: 13px; text-align: center; user-select: none; transition: 0.1s; font-weight: 600; color: #e2e8f0; }
@@ -217,11 +227,11 @@
     </div>
 
     <div class="quick-actions">
-      <button class="quick-btn deposit" onclick="scrollToWallet('depositSection')">
+      <button class="quick-btn deposit" onclick="switchView('deposit','wallet')">
         <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         <span data-i18n="deposit">Deposit</span>
       </button>
-      <button class="quick-btn withdraw" onclick="scrollToWallet('withdrawSection')">
+      <button class="quick-btn withdraw" onclick="switchView('withdraw','wallet')">
         <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         <span data-i18n="withdraw">Withdraw</span>
       </button>
@@ -265,21 +275,35 @@
     </div>
   </div>
 
-  <!-- WALLET VIEW -->
-  <div id="view-wallet" class="view">
+  <!-- DEPOSIT VIEW -->
+  <div id="view-deposit" class="view">
+    <div class="wallet-tabs">
+      <button class="wallet-tab active" data-tab="deposit" onclick="switchView('deposit','wallet')" data-i18n="deposit">Deposit</button>
+      <button class="wallet-tab" data-tab="withdraw" onclick="switchView('withdraw','wallet')" data-i18n="withdraw">Withdraw</button>
+    </div>
+
     <div class="panel" id="depositSection">
       <h2 data-i18n="depositTitle">💰 Deposit</h2>
       <div style="background: var(--cell); padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; border-left: 3px solid var(--green); line-height: 1.6;">
-        <b>Telebirr:</b> 0912345678 <br>
-        <b>CBE:</b> 1000123456789
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+          <div><b>Telebirr:</b> <span class="copy-num" onclick="copyTelebirr()">0906151003</span></div>
+          <button type="button" class="copy-btn" id="telebirrCopyBtn" onclick="copyTelebirr()" data-i18n="copy">Copy</button>
+        </div>
       </div>
       <input type="number" id="depAmount" placeholder="Amount (Birr)" min="1" data-i18n-ph="amount">
       <select id="depMethod">
         <option value="telebirr">Telebirr</option>
-        <option value="cbe">CBE</option>
       </select>
       <input type="text" id="depProof" placeholder="Transaction ID / SMS Reference" data-i18n-ph="proof">
       <button class="btn-green" onclick="handleDeposit()" data-i18n="submitDeposit">Submit Deposit</button>
+    </div>
+  </div>
+
+  <!-- WITHDRAW VIEW -->
+  <div id="view-withdraw" class="view">
+    <div class="wallet-tabs">
+      <button class="wallet-tab" data-tab="deposit" onclick="switchView('deposit','wallet')" data-i18n="deposit">Deposit</button>
+      <button class="wallet-tab active" data-tab="withdraw" onclick="switchView('withdraw','wallet')" data-i18n="withdraw">Withdraw</button>
     </div>
 
     <div class="panel" id="withdrawSection">
@@ -319,7 +343,7 @@
       <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
       <span data-i18n="navActivity">Activity</span>
     </button>
-    <button class="nav-item" id="nav-wallet" onclick="switchView('wallet')">
+    <button class="nav-item" id="nav-wallet" onclick="switchView('deposit','wallet')">
       <svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path></svg>
       <span data-i18n="navWallet">Wallet</span>
     </button>
@@ -435,7 +459,8 @@
       autoDrawIn: "Auto-draw in",
       drawingNow: "Drawing winners...",
       noRoundWait: "Waiting for next round...",
-      youWon: "You Won!"
+      youWon: "You Won!",
+      copy: "Copy", copied: "Copied!"
     },
     am: {
       title: "Number gaming", fullName: "ሙሉ ስም",
@@ -478,7 +503,8 @@
       autoDrawIn: "ራስ-ሰር ዕፃ በ",
       drawingNow: "አሸናፊዎችን በመሳል ላይ...",
       noRoundWait: "ቀጣይ ዙር እስኪጀመር በመጠበቅ ላይ...",
-      youWon: "አሸንፈዋል!"
+      youWon: "አሸንፈዋል!",
+      copy: "ቅዳ", copied: "ተቀድቷል!"
     }
   };
 
@@ -518,23 +544,44 @@
     return data;
   }
 
-  function switchView(viewName) {
+  function switchView(viewName, navName) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     const v = $(`view-${viewName}`);
     if (v) v.classList.add('active');
-    const n = $(`nav-${viewName}`);
+    const n = $(`nav-${navName || viewName}`);
     if (n) n.classList.add('active');
+    document.querySelectorAll('.wallet-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === viewName));
     if (viewName === 'winners') loadWinners();
     if (viewName === 'activity') loadHistory();
   }
 
-  function scrollToWallet(sectionId) {
-    switchView('wallet');
-    const sec = $(sectionId);
-    sec.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    sec.classList.add('highlight');
-    setTimeout(() => sec.classList.remove('highlight'), 2000);
+  // ===== COPY TELEBIRR NUMBER =====
+  function copyTelebirr() {
+    const num = '0906151003';
+    const t = translations[currentLang];
+    const btn = $('telebirrCopyBtn');
+    const showCopied = () => {
+      if (!btn) return;
+      btn.textContent = t.copied;
+      setTimeout(() => { btn.textContent = t.copy; }, 1500);
+    };
+    const fallback = () => {
+      const ta = document.createElement('textarea');
+      ta.value = num;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try { document.execCommand('copy'); showCopied(); } catch (e) { alert(num); }
+      document.body.removeChild(ta);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(num).then(showCopied).catch(fallback);
+    } else {
+      fallback();
+    }
   }
 
   // ===== NUMBER GAME =====
