@@ -247,16 +247,29 @@
         let details = '';
         if (t.type === 'deposit') {
           const proofStr = String(t.proof || '');
-          const urlMatch = proofStr.match(/https?:\/\/[^\s]+/g);
           
-          details = `<b>Method:</b> ${esc(t.method)}<br>`;
+          // 1. Check if there is a full URL
+          const urlMatch = proofStr.match(/https?:\/\/[^\s]+/g);
+          let finalUrl = '';
           
           if (urlMatch && urlMatch.length > 0) {
-            // Clean trailing punctuation from the URL
-            const cleanUrl = urlMatch[0].replace(/[.,;!?]+$/, '');
-            details += `<a href="${esc(cleanUrl)}" target="_blank" style="color: var(--blue); text-decoration: underline; word-break: break-all; font-weight: bold; font-size: 13px;">🔗 ${esc(cleanUrl)}</a>`;
+            // Extract the URL and remove trailing punctuation (like a period)
+            finalUrl = urlMatch[0].replace(/[.,;!?]+$/, '');
           } else {
-            details += `<span style="color: var(--text-muted); font-size: 12px; font-style: italic;">No link found in SMS</span>`;
+            // 2. If no URL, look for a Transaction ID (e.g., DKL1HE951P)
+            // Matches 8 to 15 alphanumeric characters that contain at least one number
+            const idMatch = proofStr.match(/\b(?=[A-Z0-9]*[0-9])[A-Z0-9]{8,15}\b/i);
+            if (idMatch && idMatch.length > 0) {
+              finalUrl = `https://transactioninfo.ethiotelecom.et/receipt/${idMatch[0].toUpperCase()}`;
+            }
+          }
+
+          details = `<b>Method:</b> ${esc(t.method)}<br>`;
+          
+          if (finalUrl) {
+            details += `<a href="${esc(finalUrl)}" target="_blank" style="color: var(--blue); text-decoration: underline; word-break: break-all; font-weight: bold; font-size: 13px;">🔗 ${esc(finalUrl)}</a>`;
+          } else {
+            details += `<span style="color: var(--text-muted); font-size: 12px; font-style: italic;">No link or valid ID found</span>`;
           }
         } else {
           details = `<b>Method:</b> ${esc(t.method)}<br><span class="proof-text">${esc(t.account_details)}</span>`;
