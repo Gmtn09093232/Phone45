@@ -37,7 +37,7 @@
 
   .btn-sm { padding:8px 12px; font-size:13px; width: 100%; margin-bottom: 5px; }
   .hidden { display:none !important; }
-  .proof-text { font-family: monospace; background: #1b1b2b; padding: 8px; border-radius: 4px; font-size: 12px; border: 1px solid #3b3b58; display: inline-block; margin-top: 4px; word-break: break-all; line-height: 1.5;}
+  .proof-text { font-family: monospace; background: #1b1b2b; padding: 6px; border-radius: 4px; font-size: 12px; border: 1px solid #3b3b58; display: inline-block; margin-top: 4px; word-break: break-all;}
 
   .place-1 { color: #FFD700; font-weight: bold; white-space: nowrap; }
   .place-2 { color: #C0C0C0; font-weight: bold; white-space: nowrap; }
@@ -246,25 +246,17 @@
       body.innerHTML = rows.map(t => {
         let details = '';
         if (t.type === 'deposit') {
-          let proofEsc = esc(t.proof || '');
-          const urlRegex = /(https?:\/\/[^\s]+)/g;
-          const urls = [];
-
-          // Extract URL and make it clickable inside the text
-          proofEsc = proofEsc.replace(urlRegex, (match) => {
-            // Remove trailing punctuation like periods or commas from the URL
-            let cleanMatch = match.replace(/[.,;!?]+$/, '');
-            let trailing = match.substring(cleanMatch.length);
-            urls.push(cleanMatch);
-            
-            return `<a href="${cleanMatch}" target="_blank" style="color: var(--blue); text-decoration: underline; word-break: break-all;">${cleanMatch}</a>${trailing}`;
-          });
-
-          details = `<b>Method:</b> ${esc(t.method)}<br><span class="proof-text">${proofEsc}</span>`;
+          const proofStr = String(t.proof || '');
+          const urlMatch = proofStr.match(/https?:\/\/[^\s]+/g);
           
-          // Add a quick Verify button if URL is found
-          if (urls.length > 0) {
-             details += `<br><button class="btn-sm blue" onclick="window.open('${urls[0]}', '_blank')" style="margin-top: 8px; padding: 6px 10px; font-size: 12px; width: auto;">🔗 Open Receipt Link</button>`;
+          details = `<b>Method:</b> ${esc(t.method)}<br>`;
+          
+          if (urlMatch && urlMatch.length > 0) {
+            // Clean trailing punctuation from the URL
+            const cleanUrl = urlMatch[0].replace(/[.,;!?]+$/, '');
+            details += `<a href="${esc(cleanUrl)}" target="_blank" style="color: var(--blue); text-decoration: underline; word-break: break-all; font-weight: bold; font-size: 13px;">🔗 ${esc(cleanUrl)}</a>`;
+          } else {
+            details += `<span style="color: var(--text-muted); font-size: 12px; font-style: italic;">No link found in SMS</span>`;
           }
         } else {
           details = `<b>Method:</b> ${esc(t.method)}<br><span class="proof-text">${esc(t.account_details)}</span>`;
